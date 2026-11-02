@@ -120,6 +120,12 @@
   background: var(--bg-surface);
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
+.lp-search .ui-form-fields {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-3);
+}
 .lp-search__icon {
   flex: none;
   color: var(--text-tertiary);

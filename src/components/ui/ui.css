@@ -67,3 +67,9 @@
 .ui-hover-menu__panel[hidden] {
   display: none;
 }
+.ui-form-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}

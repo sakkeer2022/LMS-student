@@ -35,6 +35,10 @@ Built from Figma "Amentorz-webapp", node 1:948, in `src/features/landing`: heade
 - **Links:** `/login` (student login, next), `/signup` (student onboarding, to come), `/tutors`, `/library`, `/about`, `/pricing` and the other footer pages are not built yet and show the 404 page until they are.
 - **Design copy kept as drawn:** the "18% GST" sentence in How it works is design copy; confirm it before launch (T9).
 
+## Login (`/login`)
+
+Built from Figma "Amentorz-webapp" "Screen/02 · Login", node 3:1137, in `src/features/auth` (form, zod schema, `login.css`) and `src/app/(auth)`. It signs in with `POST /auth/student/login` (with `rememberMe` from "Keep me signed in"), then returns to the `redirect` path or `/`. "Forgot password?" (`/recovery`) and "Create account" (`/signup`) are not built yet (LMS-99 and student onboarding). The proof figures in the brand panel come from `getLandingData().stats`; the testimonial card is not built because there is no testimonial data (T9).
+
 ## Layout
 
 `src/app` routes · `src/features/<feature>` screens · `src/components/ui` the only place for native `button`, `input`, `form` and headings · `src/lib/api` the API client (CSRF, refresh) · `src/lib/auth` session types · `public/landing` Figma assets (downloaded; the Figma URLs expire).
