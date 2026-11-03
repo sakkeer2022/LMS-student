@@ -39,6 +39,10 @@ Built from Figma "Amentorz-webapp", node 1:948, in `src/features/landing`: heade
 
 Built from Figma "Amentorz-webapp" "Screen/02 · Login", node 3:1137, in `src/features/auth` (form, zod schema, `login.css`) and `src/app/(auth)`. It signs in with `POST /auth/student/login` (with `rememberMe` from "Keep me signed in"), then returns to the `redirect` path or `/`. "Forgot password?" (`/recovery`) and "Create account" (`/signup`) are not built yet (LMS-99 and student onboarding). The proof figures in the brand panel come from `getLandingData().stats`; the testimonial card is not built because there is no testimonial data (T9).
 
+## Forgot password (`/recovery`)
+
+Forgot password (`/recovery`, Figma 427:4388, 427:4492, 427:29259) is one page with four steps: email, code, new password, done. It uses `POST /auth/recovery/requests`, `/verify` and `/reset`; the reset credential lives only in component state, never in a URL or storage. The code step has no frame yet (see the backend `docs/PENDING_DECISIONS.md`, P8).
+
 ## Layout
 
 `src/app` routes · `src/features/<feature>` screens · `src/components/ui` the only place for native `button`, `input`, `form` and headings · `src/lib/api` the API client (CSRF, refresh) · `src/lib/auth` session types · `public/landing` Figma assets (downloaded; the Figma URLs expire).
