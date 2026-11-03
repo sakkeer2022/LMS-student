@@ -43,6 +43,14 @@ Built from Figma "Amentorz-webapp" "Screen/02 · Login", node 3:1137, in `src/fe
 
 Forgot password (`/recovery`, Figma 427:4388, 427:4492, 427:29259) is one page with four steps: email, code, new password, done. It uses `POST /auth/recovery/requests`, `/verify` and `/reset`; the reset credential lives only in component state, never in a URL or storage. The code step has no frame yet (see the backend `docs/PENDING_DECISIONS.md`, P8).
 
+## Sign up (`/signup`)
+
+Student registration from Figma "Amentorz-webapp" screens 03a-03d (nodes 992:48063, 992:48106, 992:48156, 992:48186, 992:48209), in `src/features/signup`. Built so far: **step 1 (account)**, the **email verification popup** and the **guardian consent popup**; the learning profile (step 2) waits for the category module, and steps 3 and 4 follow.
+
+Workflow (decided over the frames): step 1's button reads "Continue to verification" and opens a popup that emails a 6-digit code (`POST /auth/registration/email-otp/requests` and `/verify`); right after a successful verification a student below the country's consent age gets the signature popup (`POST /consent/guardian-signatures`, multipart PNG); an adult goes straight on. Step 3 (guardian contact) is optional for adults.
+
+What the screens do not hard-code: the country comes from the mobile number's dialling code (`GET /regions/countries`, which also gives the consent age), the Student Terms title, version and effective date come from `GET /policies/current?country=`, and the preview is that PDF. The email and consent tokens live only in memory (never in a URL or storage), so a refresh starts again. Shared parts: `DatePicker` (typed `dd / mm / yyyy` or a calendar with month and year dropdowns, value `YYYY-MM-DD`; built on `react-day-picker`), `Dialog`, `OtpInput`, `SignaturePad` in `src/components/ui`.
+
 ## Layout
 
 `src/app` routes · `src/features/<feature>` screens · `src/components/ui` the only place for native `button`, `input`, `form` and headings · `src/lib/api` the API client (CSRF, refresh) · `src/lib/auth` session types · `public/landing` Figma assets (downloaded; the Figma URLs expire).

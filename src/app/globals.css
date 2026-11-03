@@ -1,7 +1,9 @@
 @import "tailwindcss";
+@import "react-day-picker/style.css";
 @import "../styles/tokens.css";
 @import "../components/ui/ui.css";
 @import "../features/landing/landing.css";
+@import "../features/signup/signup.css";
 
 * {
   box-sizing: border-box;

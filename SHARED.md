@@ -10,6 +10,7 @@
 | `implement-screen` skill               | `.claude/skills/implement-screen`                  | amentorz-admin                  |
 | Figma tokens                           | `src/styles/tokens.css`                            | Figma "Webapplication" 35:2     |
 | Login screen (form, `login.css`, `login-controls`, brand photos) | `src/features/auth`, `src/components/ui/login-controls.tsx`, `public/auth` | amentorz-admin; student copy, text and endpoint differ |
+| `DatePicker`, `Dialog`, `OtpInput`, `SignaturePad` | `src/components/ui` | new in the student app; copy to the other apps when they need a date, a popup, a code or a signature (the date picker is meant for reuse in later modules) |
 | `Link`, `cx`, `Form`                           | `src/components/ui`                                | amentorz-admin                  |
 
 Differences on purpose: this app has no login gate in `middleware.ts` yet (the landing page is public; the signed-in area will gate on `/auth/me` like the admin does), and its UI is built on the Figma tokens, not the admin's earlier theme.

@@ -1,4 +1,6 @@
 "use client";
+import { Check } from "lucide-react";
+import { DatePicker } from "./DatePicker";
 import { Form } from "./Form";
 import { forwardRef, useState, type ComponentProps } from "react";
 
@@ -31,6 +33,8 @@ type LoginFieldProps = Omit<ComponentProps<"input">, "id" | "name"> & {
   error?: string;
   /** Adds the show/hide toggle for a password input */
   reveal?: boolean;
+  /** Shows a check mark at the end of the field (a verified email) */
+  verified?: boolean;
 };
 
 export function LoginField({
@@ -40,6 +44,7 @@ export function LoginField({
   hint,
   error,
   reveal,
+  verified,
   type,
   required,
   ...props
@@ -73,6 +78,11 @@ export function LoginField({
             [errorId, hintId].filter(Boolean).join(" ") || undefined
           }
         />
+        {verified && (
+          <span className="login-verified" role="img" aria-label="Verified">
+            <Check size={14} aria-hidden />
+          </span>
+        )}
         {reveal && (
           <button
             type="button"
@@ -141,5 +151,69 @@ export function LoginSecondaryButton({
     <button {...props} type="button" className="login-secondary">
       {children}
     </button>
+  );
+}
+
+/** A labelled date field (typed or picked from a calendar) in the sign-in / sign-up style. */
+export function LoginDateField({
+  name,
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  hint,
+  error,
+  required,
+}: {
+  name: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  min?: string;
+  max?: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+}) {
+  const errorId = error ? `${name}-error` : undefined;
+  const hintId = hint ? `${name}-hint` : undefined;
+  return (
+    <div className="login-field">
+      <label className="login-label" htmlFor={name}>
+        {label}
+        {required && (
+          <span className="login-required" aria-hidden>
+            *
+          </span>
+        )}
+      </label>
+      <div
+        className="login-control login-control--date"
+        data-invalid={Boolean(error)}
+      >
+        <DatePicker
+          id={name}
+          name={name}
+          value={value}
+          onChange={onChange}
+          min={min}
+          max={max}
+          required={required}
+          invalid={Boolean(error)}
+          describedBy={[errorId, hintId].filter(Boolean).join(" ") || undefined}
+        />
+      </div>
+      {hint && !error && (
+        <p id={hintId} className="login-hint">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={errorId} className="login-field-error">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
