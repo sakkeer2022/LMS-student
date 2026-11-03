@@ -29,11 +29,12 @@ export function VerifyEmailDialog({
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [sending, setSending] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const requested = useRef<string | null>(null);
 
   async function send(): Promise<void> {
-    setPending(true);
+    setSending(true);
     setError("");
     try {
       const sent = await requestEmailCode(email);
@@ -130,7 +131,7 @@ export function VerifyEmailDialog({
       <OtpInput
         value={code}
         onChange={setCode}
-        disabled={pending || !challenge}
+        disabled={pending}
         invalid={Boolean(error)}
         autoFocus
       />
@@ -145,7 +146,7 @@ export function VerifyEmailDialog({
           variant="ghost"
           className="signup-link"
           onClick={() => void send()}
-          disabled={pending || wait > 0}
+          disabled={pending || sending || wait > 0}
         >
           {wait > 0 ? `Resend code in ${wait}s` : "Resend code"}
         </Button>

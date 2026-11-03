@@ -27,6 +27,7 @@
   --bg-success-subtle: #dcfce7;
   --border-default: #e2e8f0;
   --border-subtle: #f1f5f9;
+  --border-strong: #cbd5e1;
   --border-focus: #913d95;
   --text-primary: #0f172a;
   --text-secondary: #475569;
@@ -38,6 +39,16 @@
   --action-primary-hover: #562b7a;
   --action-primary-pressed: #452162;
   --icon-rating: #d97706;
+  --text-error: #991b1b;
+  --bg-error-subtle: #fee2e2;
+  --text-success: #166534;
+  --text-warning: #92400e;
+  --bg-warning-subtle: #fef3c7;
+  --border-warning: #d97706;
+  --text-info: #1e40af;
+  --bg-info-subtle: #dbeafe;
+  --border-info: #2563eb;
+  --bg-surface-sunken: #f1f5f9;
 
   --radius-default: 6px;
   --radius-md: 12px;

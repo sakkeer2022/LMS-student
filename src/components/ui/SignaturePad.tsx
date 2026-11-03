@@ -28,24 +28,49 @@ export const SignaturePad = forwardRef<
   const canvas = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const inked = useRef(false);
+  // The strokes are kept so the drawing can be redrawn when the canvas changes size
+  const strokes = useRef<{ x: number; y: number }[][]>([]);
   const [cleared, setCleared] = useState(true);
 
-  // Match the canvas bitmap to its size on screen (and the screen's pixel density) so lines stay sharp
+  function paint(): void {
+    const element = canvas.current;
+    const context = element?.getContext("2d");
+    if (!element || !context) return;
+    const ratio = window.devicePixelRatio || 1;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    context.clearRect(0, 0, element.width / ratio, element.height / ratio);
+    context.lineWidth = 2.2;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = "#0f172a";
+    for (const stroke of strokes.current) {
+      context.beginPath();
+      stroke.forEach((p, i) =>
+        i === 0 ? context.moveTo(p.x, p.y) : context.lineTo(p.x, p.y),
+      );
+      if (stroke.length === 1)
+        context.lineTo(stroke[0]!.x + 0.01, stroke[0]!.y + 0.01);
+      context.stroke();
+    }
+  }
+
+  // The canvas sits in a dialog that is closed (zero size) until it opens, so its bitmap is sized whenever
+  // its box changes, to the box on screen and the screen's pixel density; the strokes are then redrawn
   useEffect(() => {
     const element = canvas.current;
     if (!element) return;
-    const ratio = window.devicePixelRatio || 1;
-    const { width, height } = element.getBoundingClientRect();
-    element.width = Math.round(width * ratio);
-    element.height = Math.round(height * ratio);
-    const context = element.getContext("2d");
-    if (context) {
-      context.scale(ratio, ratio);
-      context.lineWidth = 2.2;
-      context.lineCap = "round";
-      context.lineJoin = "round";
-      context.strokeStyle = "#0f172a";
-    }
+    const fit = (): void => {
+      const { width, height } = element.getBoundingClientRect();
+      if (width === 0 || height === 0) return;
+      const ratio = window.devicePixelRatio || 1;
+      element.width = Math.round(width * ratio);
+      element.height = Math.round(height * ratio);
+      paint();
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    return () => observer.disconnect();
   }, []);
 
   function point(event: React.PointerEvent<HTMLCanvasElement>): {
@@ -65,8 +90,8 @@ export const SignaturePad = forwardRef<
 
   useImperativeHandle(ref, () => ({
     clear() {
-      const element = canvas.current;
-      element?.getContext("2d")?.clearRect(0, 0, element.width, element.height);
+      strokes.current = [];
+      paint();
       setInk(false);
     },
     toPng() {
@@ -84,24 +109,16 @@ export const SignaturePad = forwardRef<
         role="img"
         aria-label={label}
         onPointerDown={(event) => {
-          const context = event.currentTarget.getContext("2d");
-          if (!context) return;
           event.currentTarget.setPointerCapture(event.pointerId);
           drawing.current = true;
-          const { x, y } = point(event);
-          context.beginPath();
-          context.moveTo(x, y);
-          context.lineTo(x + 0.01, y + 0.01);
-          context.stroke();
+          strokes.current.push([point(event)]);
+          paint();
           setInk(true);
         }}
         onPointerMove={(event) => {
           if (!drawing.current) return;
-          const context = event.currentTarget.getContext("2d");
-          if (!context) return;
-          const { x, y } = point(event);
-          context.lineTo(x, y);
-          context.stroke();
+          strokes.current[strokes.current.length - 1]?.push(point(event));
+          paint();
         }}
         onPointerUp={() => {
           drawing.current = false;
