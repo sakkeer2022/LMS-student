@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
-import { UserCircle, Users } from "lucide-react";
+import { BookOpen, UserCircle, Users } from "lucide-react";
 import { AuthError, AuthHead } from "@/components/auth/auth-controls";
 import { Button } from "@/components/shadcn/button";
 import { Checkbox } from "@/components/shadcn/checkbox";
 import { Label } from "@/components/shadcn/label";
 import { fetchPolicies, policyFileUrl, type PolicyView } from "../api";
+import { profileSummary, type LearningDraft } from "../catalogue";
 import { relationshipLabel } from "../schema";
 import type { GuardianDetails } from "./guardian-step";
 
@@ -15,10 +16,12 @@ function RecapRow({
   icon,
   label,
   value,
+  detail,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
+  detail?: string;
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3">
@@ -26,7 +29,12 @@ function RecapRow({
         {icon}
         {label}
       </span>
-      <span className="text-right text-base font-semibold">{value}</span>
+      <span className="text-right">
+        <span className="block text-base font-semibold">{value}</span>
+        {detail && (
+          <span className="block text-xs text-text-secondary">{detail}</span>
+        )}
+      </span>
     </div>
   );
 }
@@ -52,6 +60,7 @@ function PolicyLink({ policy }: { policy: PolicyView }) {
 export function ReviewStep({
   country,
   studentName,
+  profile,
   guardian,
   minor,
   notice,
@@ -60,6 +69,7 @@ export function ReviewStep({
 }: {
   country: string;
   studentName: string;
+  profile: LearningDraft | null;
   guardian: GuardianDetails | null;
   minor: boolean;
   notice?: string | null;
@@ -114,6 +124,14 @@ export function ReviewStep({
           label="Student"
           value={studentName}
         />
+        {profile && (
+          <RecapRow
+            icon={<BookOpen aria-hidden className="size-5" />}
+            label="Class, board & subjects"
+            value={profileSummary(profile)}
+            detail={profile.subjects.map((subject) => subject.name).join(", ")}
+          />
+        )}
         {guardian && (
           <RecapRow
             icon={<Users aria-hidden className="size-5" />}

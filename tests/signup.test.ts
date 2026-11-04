@@ -6,6 +6,11 @@ import {
   parseCalendarDate,
   parseDisplayDate,
 } from "@/lib/dates";
+import {
+  isLearningComplete,
+  profileSummary,
+  type LearningDraft,
+} from "@/features/signup/catalogue";
 import { countryOfMobile, normalizeMobile, type Country } from "@/lib/regions";
 import {
   GUARDIAN_RELATIONSHIPS,
@@ -170,5 +175,53 @@ describe("guardian contact", () => {
       "other",
     ]);
     expect(relationshipLabel("legal_guardian")).toBe("Legal guardian");
+  });
+});
+
+describe("learning profile", () => {
+  const leaf = { requiresBoard: true, requiresLevel: true };
+  const pick = { id: "x", name: "X" };
+
+  it("needs the board and class the leaf asks for, a subject and a language", () => {
+    const base = {
+      leaf,
+      board: pick,
+      level: pick,
+      subjects: [pick],
+      teachingLanguageId: "l",
+    };
+    expect(isLearningComplete(base)).toBe(true);
+    expect(isLearningComplete({ ...base, board: null })).toBe(false);
+    expect(isLearningComplete({ ...base, level: null })).toBe(false);
+    expect(isLearningComplete({ ...base, subjects: [] })).toBe(false);
+    expect(isLearningComplete({ ...base, teachingLanguageId: null })).toBe(
+      false,
+    );
+    expect(isLearningComplete({ ...base, leaf: null })).toBe(false);
+  });
+
+  it("does not ask for a board or class the leaf does not use", () => {
+    expect(
+      isLearningComplete({
+        leaf: { requiresBoard: false, requiresLevel: false },
+        board: null,
+        level: null,
+        subjects: [pick],
+        teachingLanguageId: "l",
+      }),
+    ).toBe(true);
+  });
+
+  it("summarises as class and board, or the category when there are neither", () => {
+    const draft: LearningDraft = {
+      trail: [{ id: "c", code: "k12", name: "K-12", isLeaf: true }],
+      board: { id: "b", name: "CBSE" },
+      level: { id: "l", name: "Class 10" },
+      subjects: [],
+      teachingLanguageId: "t",
+      curriculumIds: [],
+    };
+    expect(profileSummary(draft)).toBe("Class 10 · CBSE");
+    expect(profileSummary({ ...draft, board: null, level: null })).toBe("K-12");
   });
 });

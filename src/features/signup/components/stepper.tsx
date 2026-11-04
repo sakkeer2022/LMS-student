@@ -19,7 +19,7 @@ export function Stepper({
   optional?: Step[];
 }) {
   return (
-    <ol className="m-0 flex list-none flex-wrap items-center gap-x-4 gap-y-2 p-0 sm:flex-nowrap" aria-label="Registration steps">
+    <ol className="m-0 flex list-none flex-wrap items-center gap-x-4 gap-y-2 p-0 min-[1480px]:flex-nowrap" aria-label="Registration steps">
       {STEPS.map((label, index) => {
         const step = (index + 1) as Step;
         const state =
@@ -28,8 +28,8 @@ export function Stepper({
           <li
             key={label}
             className={cn(
-              "group flex items-center gap-2 text-sm font-semibold whitespace-nowrap text-muted-foreground sm:flex-1 sm:last:flex-none",
-              "sm:after:h-px sm:after:min-w-6 sm:after:flex-1 sm:after:bg-border sm:last:after:hidden",
+              "group flex items-center gap-2 text-sm font-semibold whitespace-nowrap text-muted-foreground min-[1480px]:flex-1 min-[1480px]:last:flex-none",
+              "min-[1480px]:after:h-px min-[1480px]:after:min-w-6 min-[1480px]:after:flex-1 min-[1480px]:after:bg-border min-[1480px]:last:after:hidden",
               state !== "todo" && "text-foreground",
             )}
             data-state={state}

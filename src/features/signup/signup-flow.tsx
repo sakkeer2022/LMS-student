@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { AuthHead } from "@/components/auth/auth-controls";
 import { Button } from "@/components/shadcn/button";
 import { completedYears } from "@/lib/dates";
@@ -12,10 +11,12 @@ import {
 } from "./components/account-step";
 import { ConsentDialog } from "./components/consent-dialog";
 import { GuardianStep, type GuardianDetails } from "./components/guardian-step";
+import { LearningStep } from "./components/learning-step";
 import { ReviewStep } from "./components/review-step";
 import { Stepper, type Step } from "./components/stepper";
 import { VerifyEmailDialog } from "./components/verify-email-dialog";
 import type { ConsentReceipt } from "./api";
+import type { LearningDraft } from "./catalogue";
 
 const EMPTY: AccountDraft = {
   fullName: "",
@@ -39,6 +40,7 @@ export function SignupFlow() {
   const [submission, setSubmission] = useState<AccountSubmission | null>(null);
   const [emailToken, setEmailToken] = useState<string | null>(null);
   const [consent, setConsent] = useState<ConsentReceipt | null>(null);
+  const [profile, setProfile] = useState<LearningDraft | null>(null);
   const [guardian, setGuardian] = useState<GuardianDetails | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [dialog, setDialog] = useState<"verify" | "consent" | null>(null);
@@ -121,27 +123,14 @@ export function SignupFlow() {
           onSubmit={submitAccount}
         />
       ) : step === 2 ? (
-        <div className="flex w-full flex-col gap-6">
-          <AuthHead
-            title="Your learning profile"
-            lead="Step 2 of 4 · this step is being set up."
-            size="form"
-          />
-          <p className="rounded-md bg-sunken p-3 text-xs text-muted-foreground">
-            Your account details are kept while you wait.
-          </p>
-          <div className="flex items-center justify-between gap-3">
-            <Button variant="ghost" onClick={() => setStep(1)}>
-              Back
-            </Button>
-            <div className="flex items-center gap-3">
-              <Button asChild variant="ghost">
-                <Link href="/">Cancel</Link>
-              </Button>
-              <Button onClick={() => setStep(3)}>Continue</Button>
-            </div>
-          </div>
-        </div>
+        <LearningStep
+          value={profile}
+          onBack={() => setStep(1)}
+          onSubmit={(draft) => {
+            setProfile(draft);
+            setStep(3);
+          }}
+        />
       ) : step === 3 && submission ? (
         <GuardianStep
           value={guardian}
@@ -158,6 +147,7 @@ export function SignupFlow() {
         <ReviewStep
           country={submission.country.code}
           studentName={submission.fullName}
+          profile={profile}
           guardian={guardian}
           minor={needsConsent}
           notice={notice}
