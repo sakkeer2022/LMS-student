@@ -63,7 +63,7 @@ export function ReviewStep({
   profile,
   guardian,
   minor,
-  notice,
+  error,
   onBack,
   onCreate,
 }: {
@@ -72,14 +72,15 @@ export function ReviewStep({
   profile: LearningDraft | null;
   guardian: GuardianDetails | null;
   minor: boolean;
-  notice?: string | null;
+  error?: string | null;
   onBack: () => void;
-  onCreate: (acceptedPolicyIds: string[]) => void;
+  onCreate: (acceptedPolicyIds: string[]) => Promise<void>;
 }) {
   const [policies, setPolicies] = useState<PolicyView[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [accepted, setAccepted] = useState<Record<string, boolean>>({});
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     let current = true;
@@ -193,14 +194,7 @@ export function ReviewStep({
           later.
         </AuthError>
       )}
-      {notice && (
-        <p
-          role="status"
-          className="rounded-md bg-info-subtle px-3 py-2 text-sm text-info-foreground"
-        >
-          {notice}
-        </p>
-      )}
+      {error && <AuthError>{error}</AuthError>}
 
       <div className="flex items-center justify-between gap-3">
         <Button type="button" variant="ghost" onClick={onBack}>
@@ -208,10 +202,15 @@ export function ReviewStep({
         </Button>
         <Button
           type="button"
-          disabled={!allAccepted}
-          onClick={() => onCreate(required.map((policy) => policy!.id))}
+          disabled={!allAccepted || creating}
+          onClick={() => {
+            setCreating(true);
+            onCreate(required.map((policy) => policy!.id)).finally(() =>
+              setCreating(false),
+            );
+          }}
         >
-          Create account
+          {creating ? "Creating…" : "Create account"}
         </Button>
       </div>
     </div>

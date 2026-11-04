@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthHead } from "@/components/auth/auth-controls";
 import { Button } from "@/components/shadcn/button";
@@ -15,7 +16,8 @@ import { LearningStep } from "./components/learning-step";
 import { ReviewStep } from "./components/review-step";
 import { Stepper, type Step } from "./components/stepper";
 import { VerifyEmailDialog } from "./components/verify-email-dialog";
-import type { ConsentReceipt } from "./api";
+import { registerStudent, type ConsentReceipt } from "./api";
+import { ApiError } from "@/lib/api/contracts";
 import type { LearningDraft } from "./catalogue";
 
 const EMPTY: AccountDraft = {
@@ -42,7 +44,8 @@ export function SignupFlow() {
   const [consent, setConsent] = useState<ConsentReceipt | null>(null);
   const [profile, setProfile] = useState<LearningDraft | null>(null);
   const [guardian, setGuardian] = useState<GuardianDetails | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const router = useRouter();
   const [dialog, setDialog] = useState<"verify" | "consent" | null>(null);
 
   function load(): void {
@@ -87,6 +90,53 @@ export function SignupFlow() {
     setDraft(raw);
     setSubmission(values);
     proceed({ token, receipt, needsConsent: minor });
+  }
+
+  async function createAccount(acceptedPolicyIds: string[]): Promise<void> {
+    const leaf = profile?.trail.at(-1);
+    if (!submission || !emailToken || !profile || !leaf) return;
+    setCreateError(null);
+    try {
+      await registerStudent({
+        emailVerificationToken: emailToken,
+        fullName: submission.fullName,
+        dateOfBirth: submission.dateOfBirth,
+        mobileNumber: submission.e164,
+        password: submission.password,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        learningProfile: {
+          categoryId: leaf.id,
+          boardId: profile.board?.id ?? null,
+          levelId: profile.level?.id ?? null,
+          teachingLanguageId: profile.teachingLanguageId,
+          curriculumIds: profile.curriculumIds,
+        },
+        ...(guardian && {
+          guardian: {
+            fullName: guardian.fullName,
+            relationship: guardian.relationship,
+            mobileNumber: guardian.e164,
+            email: guardian.email,
+            receivesReportsAndReceipts: guardian.notifyReports,
+          },
+        }),
+        ...(needsConsent && consent && { consentToken: consent.consentToken }),
+        acceptedPolicyIds,
+      });
+      router.push("/login");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        setCreateError(
+          "This email already has an account. Sign in instead, or go back and use another email.",
+        );
+      } else if (error instanceof ApiError && error.status === 422) {
+        // An expired email check cannot be retried: ask for the code again
+        if (/verif/i.test(error.message)) setEmailToken(null);
+        setCreateError(error.message);
+      } else {
+        setCreateError("We could not create the account. Please try again.");
+      }
+    }
   }
 
   if (loadError) {
@@ -150,13 +200,9 @@ export function SignupFlow() {
           profile={profile}
           guardian={guardian}
           minor={needsConsent}
-          notice={notice}
+          error={createError}
           onBack={() => setStep(3)}
-          onCreate={() =>
-            setNotice(
-              "Creating the account is not switched on yet. Your details are kept on this page.",
-            )
-          }
+          onCreate={createAccount}
         />
       ) : null}
 
