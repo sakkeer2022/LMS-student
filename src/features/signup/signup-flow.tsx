@@ -11,6 +11,8 @@ import {
   type AccountSubmission,
 } from "./components/account-step";
 import { ConsentDialog } from "./components/consent-dialog";
+import { GuardianStep, type GuardianDetails } from "./components/guardian-step";
+import { ReviewStep } from "./components/review-step";
 import { Stepper, type Step } from "./components/stepper";
 import { VerifyEmailDialog } from "./components/verify-email-dialog";
 import type { ConsentReceipt } from "./api";
@@ -37,6 +39,8 @@ export function SignupFlow() {
   const [submission, setSubmission] = useState<AccountSubmission | null>(null);
   const [emailToken, setEmailToken] = useState<string | null>(null);
   const [consent, setConsent] = useState<ConsentReceipt | null>(null);
+  const [guardian, setGuardian] = useState<GuardianDetails | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [dialog, setDialog] = useState<"verify" | "consent" | null>(null);
 
   function load(): void {
@@ -75,6 +79,7 @@ export function SignupFlow() {
       submission?.dateOfBirth === values.dateOfBirth;
     const receipt = sameStudent ? consent : null;
     const token = submission?.email === values.email ? emailToken : null;
+    if (guardian?.email === values.email) setGuardian(null);
     if (!sameStudent) setConsent(null);
     if (submission?.email !== values.email) setEmailToken(null);
     setDraft(raw);
@@ -115,7 +120,7 @@ export function SignupFlow() {
           pending={dialog !== null}
           onSubmit={submitAccount}
         />
-      ) : (
+      ) : step === 2 ? (
         <div className="flex w-full flex-col gap-6">
           <AuthHead
             title="Your learning profile"
@@ -129,12 +134,41 @@ export function SignupFlow() {
             <Button variant="ghost" onClick={() => setStep(1)}>
               Back
             </Button>
-            <Button asChild variant="ghost">
-              <Link href="/">Cancel</Link>
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button asChild variant="ghost">
+                <Link href="/">Cancel</Link>
+              </Button>
+              <Button onClick={() => setStep(3)}>Continue</Button>
+            </div>
           </div>
         </div>
-      )}
+      ) : step === 3 && submission ? (
+        <GuardianStep
+          value={guardian}
+          countries={countries}
+          studentEmail={submission.email}
+          required={needsConsent}
+          onBack={() => setStep(2)}
+          onSubmit={(details) => {
+            setGuardian(details);
+            setStep(4);
+          }}
+        />
+      ) : submission ? (
+        <ReviewStep
+          country={submission.country.code}
+          studentName={submission.fullName}
+          guardian={guardian}
+          minor={needsConsent}
+          notice={notice}
+          onBack={() => setStep(3)}
+          onCreate={() =>
+            setNotice(
+              "Creating the account is not switched on yet. Your details are kept on this page.",
+            )
+          }
+        />
+      ) : null}
 
       {submission && (
         <>

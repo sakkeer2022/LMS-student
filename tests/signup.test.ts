@@ -7,7 +7,12 @@ import {
   parseDisplayDate,
 } from "@/lib/dates";
 import { countryOfMobile, normalizeMobile, type Country } from "@/lib/regions";
-import { accountSchema } from "@/features/signup/schema";
+import {
+  GUARDIAN_RELATIONSHIPS,
+  accountSchema,
+  guardianSchema,
+  relationshipLabel,
+} from "@/features/signup/schema";
 
 const countries: Country[] = [
   {
@@ -121,5 +126,49 @@ describe("account schema", () => {
     expect(
       accountSchema.safeParse({ ...valid, dateOfBirth: iso }).success,
     ).toBe(false);
+  });
+});
+
+describe("guardian contact", () => {
+  const valid = {
+    fullName: " Suresh Sharma ",
+    relationship: "father",
+    mobileNumber: "+91 98860 44120",
+    email: "Suresh.Sharma@Outlook.com",
+    notifyReports: true,
+  };
+
+  it("trims the name and lowercases the email", () => {
+    const parsed = guardianSchema.parse(valid);
+    expect(parsed.fullName).toBe("Suresh Sharma");
+    expect(parsed.email).toBe("suresh.sharma@outlook.com");
+  });
+
+  it("asks for each missing field and rejects an unknown relationship", () => {
+    const result = guardianSchema.safeParse({
+      ...valid,
+      fullName: "",
+      relationship: "",
+      email: "nope",
+    });
+    expect(result.success).toBe(false);
+    const fields = result.success
+      ? []
+      : result.error.issues.map((issue) => issue.path[0]);
+    expect(fields).toEqual(
+      expect.arrayContaining(["fullName", "relationship", "email"]),
+    );
+  });
+
+  it("names every relationship the backend accepts", () => {
+    expect(GUARDIAN_RELATIONSHIPS.map((item) => item.value)).toEqual([
+      "father",
+      "mother",
+      "legal_guardian",
+      "grandparent",
+      "sibling",
+      "other",
+    ]);
+    expect(relationshipLabel("legal_guardian")).toBe("Legal guardian");
   });
 });

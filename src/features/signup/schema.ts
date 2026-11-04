@@ -38,3 +38,44 @@ export const accountSchema = z.object({
 });
 
 export type AccountValues = z.infer<typeof accountSchema>;
+
+export const GUARDIAN_RELATIONSHIPS = [
+  { value: "father", label: "Father" },
+  { value: "mother", label: "Mother" },
+  { value: "legal_guardian", label: "Legal guardian" },
+  { value: "grandparent", label: "Grandparent" },
+  { value: "sibling", label: "Sibling" },
+  { value: "other", label: "Other" },
+] as const;
+
+export type GuardianRelationship =
+  (typeof GUARDIAN_RELATIONSHIPS)[number]["value"];
+
+export function relationshipLabel(value: GuardianRelationship): string {
+  return GUARDIAN_RELATIONSHIPS.find((item) => item.value === value)?.label ?? value;
+}
+
+export const guardianSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(1, "Enter the guardian's full name")
+    .max(150, "Use at most 150 characters"),
+  relationship: z.enum(
+    GUARDIAN_RELATIONSHIPS.map((item) => item.value) as [
+      GuardianRelationship,
+      ...GuardianRelationship[],
+    ],
+    { error: "Choose the relationship to the student" },
+  ),
+  mobileNumber: z.string().trim().min(1, "Enter the guardian's mobile number"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter the guardian's email address")
+    .pipe(z.email("Enter a valid email address"))
+    .transform((value) => value.toLowerCase()),
+  notifyReports: z.boolean(),
+});
+
+export type GuardianValues = z.infer<typeof guardianSchema>;
