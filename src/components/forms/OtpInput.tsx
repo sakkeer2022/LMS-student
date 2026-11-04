@@ -63,14 +63,14 @@ export function OtpInput({
   }
 
   return (
-    <div role="group" aria-label={label} className="ui-otp">
+    <div role="group" aria-label={label} className="flex gap-[9px]">
       {Array.from({ length }, (_, index) => (
         <input
           key={index}
           ref={(element) => {
             boxes.current[index] = element;
           }}
-          className="ui-otp__box"
+          className="h-[50px] w-11 rounded-md border border-border-strong bg-card text-center text-lg font-semibold outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-[invalid=true]:border-error-foreground"
           inputMode="numeric"
           autoComplete={index === 0 ? "one-time-code" : "off"}
           pattern="[0-9]*"

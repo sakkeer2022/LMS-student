@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Button, Dialog, OtpInput } from "@/components/ui";
+import { AppDialog } from "@/components/forms/AppDialog";
+import { OtpInput } from "@/components/forms/OtpInput";
+import { Button } from "@/components/shadcn/button";
 import { ApiError } from "@/lib/api/contracts";
 import { requestEmailCode, verifyEmailCode, type Challenge } from "../api";
 
@@ -104,7 +106,7 @@ export function VerifyEmailDialog({
   }
 
   return (
-    <Dialog
+    <AppDialog
       open={open}
       onClose={onClose}
       title="Verify your email"
@@ -113,7 +115,7 @@ export function VerifyEmailDialog({
         <>
           <Button
             variant="ghost"
-            className="signup-ghost"
+            className="text-accent-foreground"
             onClick={onClose}
             disabled={pending}
           >
@@ -136,21 +138,21 @@ export function VerifyEmailDialog({
         autoFocus
       />
       {error && (
-        <p className="signup-error" role="alert">
+        <p className="text-sm text-error-foreground" role="alert">
           {error}
         </p>
       )}
-      <p className="signup-resend">
+      <p className="text-sm text-text-secondary">
         Did not get it?{" "}
         <Button
           variant="ghost"
-          className="signup-link"
+          className="h-auto p-0 font-semibold text-accent-foreground hover:bg-transparent hover:underline disabled:text-disabled-foreground"
           onClick={() => void send()}
           disabled={pending || sending || wait > 0}
         >
           {wait > 0 ? `Resend code in ${wait}s` : "Resend code"}
         </Button>
       </p>
-    </Dialog>
+    </AppDialog>
   );
 }

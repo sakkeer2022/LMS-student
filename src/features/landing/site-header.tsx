@@ -1,38 +1,29 @@
 import Image from "next/image";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { ButtonLink, HoverMenu, Link } from "@/components/ui";
-import { loginOptions, navLinks } from "./content";
+import Link from "next/link";
+import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/shadcn/button";
+import { navLinks } from "./content";
+import { LoginMenu } from "./login-menu";
 
 export function SiteHeader() {
   return (
-    <header className="lp-header">
-      <Link href="/" aria-label="Amentorz home" className="lp-logo">
+    <header className="relative z-[3] flex h-[72px] items-center justify-between border-b border-white/16 bg-[url('/landing/header-bg.png')] bg-cover bg-center px-20 text-white backdrop-blur-[11.85px] max-[1100px]:px-5">
+      <Link href="/" aria-label="Amentorz home" className="block h-4 w-[107px]">
         <Image src="/landing/logo-white.svg" alt="Amentorz" width={107} height={16} priority />
       </Link>
-      <nav aria-label="Main" className="lp-nav">
+      <nav aria-label="Main" className="flex items-center gap-8 max-[1100px]:hidden">
         {navLinks.map((item) => (
-          <Link key={item.label} href={item.href} className="lp-nav__link">
+          <Link key={item.label} href={item.href} className="inline-flex items-center gap-1 text-sm leading-5">
             {item.label}
             {"menu" in item && <ChevronDown size={16} aria-hidden />}
           </Link>
         ))}
       </nav>
-      <div className="lp-actions">
-        <HoverMenu label="Log in" className="lp-login" triggerClassName="ui-button ui-button--ghost ui-button--md">
-          <ul className="lp-login__list">
-            {loginOptions.map((option) => (
-              <li key={option.label}>
-                <Link href={option.href} className="lp-login__item">
-                  {option.label}
-                  <ChevronRight size={14} aria-hidden />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </HoverMenu>
-        <ButtonLink href="/signup" variant="primary">
-          Sign up free
-        </ButtonLink>
+      <div className="flex items-center gap-3">
+        <LoginMenu />
+        <Button asChild>
+          <Link href="/signup">Sign up free</Link>
+        </Button>
       </div>
     </header>
   );

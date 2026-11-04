@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button, ButtonLink, Heading, Text } from "@/components/ui";
+import Link from "next/link";
+import { AuthHead } from "@/components/auth/auth-controls";
+import { Button } from "@/components/shadcn/button";
 import { completedYears } from "@/lib/dates";
 import { fetchCountries, type Country } from "@/lib/regions";
 import {
@@ -82,14 +84,12 @@ export function SignupFlow() {
 
   if (loadError) {
     return (
-      <div className="signup-form">
-        <Heading level={1} className="signup-title">
-          Create your student account
-        </Heading>
-        <Text className="signup-error" role="alert">
+      <div className="m-auto flex w-full max-w-[681px] flex-col gap-6">
+        <AuthHead title="Create your student account" size="form" />
+        <p className="text-sm text-error-foreground" role="alert">
           We could not load the registration form. Check your connection and try
           again.
-        </Text>
+        </p>
         <div>
           <Button onClick={load}>Try again</Button>
         </div>
@@ -98,14 +98,14 @@ export function SignupFlow() {
   }
   if (!countries) {
     return (
-      <div className="signup-form" aria-busy="true">
-        <Text className="login-subtitle">Loading…</Text>
+      <div className="m-auto flex w-full max-w-[681px] flex-col gap-6" aria-busy="true">
+        <p className="text-sm text-text-secondary">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="signup-form">
+    <div className="m-auto flex w-full max-w-[681px] flex-col gap-6">
       <Stepper current={step} optional={optional} />
       {step === 1 ? (
         <AccountStep
@@ -116,25 +116,22 @@ export function SignupFlow() {
           onSubmit={submitAccount}
         />
       ) : (
-        <div className="signup-form">
-          <div className="login-head">
-            <Heading level={1} className="signup-title">
-              Your learning profile
-            </Heading>
-            <Text className="login-subtitle">
-              Step 2 of 4 · this step is being set up.
-            </Text>
-          </div>
-          <Text className="signup-note">
+        <div className="flex w-full flex-col gap-6">
+          <AuthHead
+            title="Your learning profile"
+            lead="Step 2 of 4 · this step is being set up."
+            size="form"
+          />
+          <p className="rounded-md bg-sunken p-3 text-xs text-muted-foreground">
             Your account details are kept while you wait.
-          </Text>
-          <div className="signup-actions">
+          </p>
+          <div className="flex items-center justify-between gap-3">
             <Button variant="ghost" onClick={() => setStep(1)}>
               Back
             </Button>
-            <ButtonLink href="/" variant="ghost">
-              Cancel
-            </ButtonLink>
+            <Button asChild variant="ghost">
+              <Link href="/">Cancel</Link>
+            </Button>
           </div>
         </div>
       )}

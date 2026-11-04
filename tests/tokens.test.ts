@@ -13,15 +13,13 @@ function files(dir: string): string[] {
 
 describe("design tokens", () => {
   it("defines every CSS variable the screens use (an undefined one silently drops the style)", () => {
-    const tokens = fs.readFileSync(
-      path.join(root, "styles/tokens.css"),
-      "utf8",
-    );
+    // The Figma tokens live in globals.css (Tailwind @theme and :root)
+    const tokens = fs.readFileSync(path.join(root, "app/globals.css"), "utf8");
     const defined = new Set(
       [...tokens.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((match) => match[1]),
     );
-    // Set by Next's font loader and by react-day-picker, not by our tokens
-    const external = /^--(font-manrope|rdp-)/;
+    // Set by Next's font loader, Radix and react-day-picker at run time, not by our tokens
+    const external = /^--(font-manrope|rdp-|radix-)/;
     const missing = new Set<string>();
     for (const file of files(root).filter((name) =>
       /\.(css|tsx)$/.test(name),

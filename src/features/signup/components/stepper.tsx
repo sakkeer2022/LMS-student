@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type Step = 1 | 2 | 3 | 4;
 
@@ -18,7 +19,7 @@ export function Stepper({
   optional?: Step[];
 }) {
   return (
-    <ol className="signup-stepper" aria-label="Registration steps">
+    <ol className="m-0 flex list-none flex-wrap items-center gap-x-4 gap-y-2 p-0 sm:flex-nowrap" aria-label="Registration steps">
       {STEPS.map((label, index) => {
         const step = (index + 1) as Step;
         const state =
@@ -26,17 +27,26 @@ export function Stepper({
         return (
           <li
             key={label}
-            className="signup-step"
+            className={cn(
+              "group flex items-center gap-2 text-sm font-semibold whitespace-nowrap text-muted-foreground sm:flex-1 sm:last:flex-none",
+              "sm:after:h-px sm:after:min-w-6 sm:after:flex-1 sm:after:bg-border sm:last:after:hidden",
+              state !== "todo" && "text-foreground",
+            )}
             data-state={state}
             aria-current={state === "current" ? "step" : undefined}
           >
-            <span className="signup-step__marker">
+            <span
+              className={cn(
+                "flex size-6 flex-none items-center justify-center rounded-pill border border-border-strong bg-card text-xs tracking-[0.02em]",
+                state !== "todo" && "border-primary bg-primary text-primary-foreground",
+              )}
+            >
               {state === "done" ? <Check size={14} aria-hidden /> : step}
             </span>
-            <span className="signup-step__label">
+            <span>
               {label}
               {optional?.includes(step) && (
-                <span className="signup-step__optional"> (optional)</span>
+                <span className="font-normal text-muted-foreground"> (optional)</span>
               )}
             </span>
           </li>

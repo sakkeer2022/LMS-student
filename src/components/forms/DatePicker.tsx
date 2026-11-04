@@ -1,7 +1,7 @@
 "use client";
 import { CalendarDays } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { DayPicker } from "react-day-picker";
+import { Calendar } from "@/components/shadcn/calendar";
 import {
   formatDisplayDate,
   fromIsoDate,
@@ -79,11 +79,14 @@ export function DatePicker({
   }
 
   return (
-    <div className="ui-date" ref={root}>
+    <div
+      className="relative flex h-10 w-full items-center rounded-md border border-input bg-card focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 has-[input[aria-invalid=true]]:border-destructive"
+      ref={root}
+    >
       <input
         id={id}
         name={name}
-        className="ui-date__input"
+        className="h-10 w-full min-w-0 bg-transparent pr-11 pl-3 text-sm outline-none placeholder:text-muted-foreground"
         inputMode="numeric"
         autoComplete="bday"
         placeholder={placeholder}
@@ -99,7 +102,7 @@ export function DatePicker({
       />
       <button
         type="button"
-        className="ui-date__toggle"
+        className="absolute top-0 right-0 flex size-10 items-center justify-center rounded-md text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
         aria-label={
           value ? `Change date, ${formatDisplayDate(value)}` : "Choose a date"
         }
@@ -112,11 +115,12 @@ export function DatePicker({
       {open && (
         <div
           id={panelId}
-          className="ui-date__panel"
+          className="absolute top-[calc(100%+8px)] -left-px z-20 rounded-card border bg-popover shadow-lg"
           role="dialog"
           aria-label="Choose a date"
         >
-          <DayPicker
+          <Calendar
+            showOutsideDays={false}
             mode="single"
             captionLayout="dropdown"
             selected={selected}

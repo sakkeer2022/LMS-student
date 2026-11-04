@@ -1,13 +1,9 @@
 "use client";
 import { AlertTriangle, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import {
-  Button,
-  Dialog,
-  Heading,
-  SignaturePad,
-  type SignaturePadHandle,
-} from "@/components/ui";
+import { AppDialog } from "@/components/forms/AppDialog";
+import { SignaturePad, type SignaturePadHandle } from "@/components/forms/SignaturePad";
+import { Button } from "@/components/shadcn/button";
 import { ApiError } from "@/lib/api/contracts";
 import {
   fetchPolicies,
@@ -102,7 +98,7 @@ export function ConsentDialog({
   }
 
   return (
-    <Dialog
+    <AppDialog
       open={open}
       onClose={onClose}
       title="Review and sign the Student Terms"
@@ -120,10 +116,13 @@ export function ConsentDialog({
         </Button>
       }
     >
-      <div className="signup-callout signup-callout--warning" role="note">
-        <AlertTriangle size={20} aria-hidden />
+      <div
+        className="flex gap-3 rounded-md border border-warning-border bg-warning-subtle px-5 py-4 text-sm"
+        role="note"
+      >
+        <AlertTriangle size={20} aria-hidden className="shrink-0 text-warning-foreground" />
         <div>
-          <p className="signup-callout__title">
+          <p className="mb-1 font-semibold text-warning-foreground">
             Parent/guardian consent required
           </p>
           <p>
@@ -134,26 +133,27 @@ export function ConsentDialog({
       </div>
 
       {loadError ? (
-        <p className="signup-error" role="alert">
+        <p className="text-sm text-error-foreground" role="alert">
           {loadError}
         </p>
       ) : (
-        <section className="signup-preview" aria-label="Document preview">
-          <div className="signup-preview__head">
+        <section className="flex flex-col gap-4 rounded-md bg-sunken p-4" aria-label="Document preview">
+          <div className="flex items-center gap-3 text-sm font-semibold">
             <FileText size={20} aria-hidden />
             <span>{policy?.title ?? "Loading…"}</span>
           </div>
           {policy && (
             <iframe
-              className="signup-preview__frame"
+              className="h-60 w-full rounded-panel border border-border bg-card"
               src={`${policyFileUrl(policy.id)}#toolbar=0&navpanes=0`}
               title={`${policy.title} (PDF)`}
             />
           )}
-          <div className="signup-preview__foot">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Document preview</span>
             {policy && (
               <a
+                className="font-semibold tracking-[0.02em] text-primary"
                 href={policyFileUrl(policy.id)}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -166,17 +166,13 @@ export function ConsentDialog({
       )}
 
       <section aria-labelledby="signature-heading">
-        <div className="signup-signature__head">
-          <Heading
-            level={3}
-            id="signature-heading"
-            className="signup-signature__title"
-          >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 id="signature-heading" className="text-sm font-semibold">
             Signature
-          </Heading>
+          </h3>
           <Button
             variant="ghost"
-            className="signup-link"
+            className="h-auto p-0 font-semibold text-accent-foreground hover:bg-transparent hover:underline disabled:text-disabled-foreground"
             onClick={() => pad.current?.clear()}
             disabled={!hasInk || pending}
           >
@@ -190,10 +186,10 @@ export function ConsentDialog({
         />
       </section>
       {error && (
-        <p className="signup-error" role="alert">
+        <p className="text-sm text-error-foreground" role="alert">
           {error}
         </p>
       )}
-    </Dialog>
+    </AppDialog>
   );
 }

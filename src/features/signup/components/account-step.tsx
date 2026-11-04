@@ -1,7 +1,8 @@
 "use client";
 import { useState, type FormEvent } from "react";
-import { Button, ButtonLink, Form, Heading, Text } from "@/components/ui";
-import { LoginDateField, LoginField } from "@/components/ui/login-controls";
+import Link from "next/link";
+import { AuthDateField, AuthField, AuthHead } from "@/components/auth/auth-controls";
+import { Button } from "@/components/shadcn/button";
 import { toIsoDate } from "@/lib/dates";
 import { countryOfMobile, normalizeMobile, type Country } from "@/lib/regions";
 import { accountSchema, type AccountValues } from "../schema";
@@ -78,26 +79,23 @@ export function AccountStep({
   }
 
   return (
-    <Form
+    <form
       onSubmit={submit}
       noValidate
-      className="signup-form"
-      pending={pending}
+      className="m-auto flex w-full max-w-[681px] flex-col gap-6"
+      aria-busy={pending || undefined}
       aria-label="Create your student account"
     >
-      <div className="login-head">
-        <Heading level={1} className="signup-title">
-          Create your student account
-        </Heading>
-        <Text className="login-subtitle">
-          Step 1 of 4 · takes about three minutes. You can browse the free
-          library without an account.
-        </Text>
-      </div>
+      <fieldset disabled={pending} className="contents">
+      <AuthHead
+        title="Create your student account"
+        lead="Step 1 of 4 · takes about three minutes. You can browse the free library without an account."
+        size="form"
+      />
 
-      <div className="signup-fields">
-        <div className="signup-row">
-          <LoginField
+      <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <AuthField
             name="fullName"
             label="Student full name"
             autoComplete="name"
@@ -106,7 +104,7 @@ export function AccountStep({
             error={errors.fullName}
             required
           />
-          <LoginDateField
+          <AuthDateField
             name="dateOfBirth"
             label="Date of birth"
             value={dateOfBirth}
@@ -116,7 +114,7 @@ export function AccountStep({
             required
           />
         </div>
-        <LoginField
+        <AuthField
           name="email"
           label="Email address"
           type="email"
@@ -132,8 +130,8 @@ export function AccountStep({
           error={errors.email}
           required
         />
-        <div className="signup-row">
-          <LoginField
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <AuthField
             name="mobileNumber"
             label="Mobile number"
             type="tel"
@@ -143,7 +141,7 @@ export function AccountStep({
             error={errors.mobileNumber}
             required
           />
-          <LoginField
+          <AuthField
             name="password"
             label="Create password"
             type="password"
@@ -157,16 +155,17 @@ export function AccountStep({
         </div>
       </div>
 
-      <Text className="signup-note">{guardianNote}</Text>
+      <p className="rounded-md bg-sunken p-3 text-xs text-muted-foreground">{guardianNote}</p>
 
-      <div className="signup-actions signup-actions--end">
-        <ButtonLink href="/" variant="ghost">
-          Cancel
-        </ButtonLink>
+      <div className="flex items-center justify-end gap-3">
+        <Button asChild variant="ghost">
+          <Link href="/">Cancel</Link>
+        </Button>
         <Button type="submit" disabled={pending}>
           Continue to verification
         </Button>
       </div>
-    </Form>
+      </fieldset>
+    </form>
   );
 }

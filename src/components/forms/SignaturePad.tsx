@@ -102,10 +102,10 @@ export const SignaturePad = forwardRef<
   }));
 
   return (
-    <div className="ui-signature">
+    <div className="relative h-[175px] overflow-hidden rounded-md bg-background">
       <canvas
         ref={canvas}
-        className="ui-signature__canvas"
+        className="block h-full w-full cursor-crosshair touch-none"
         role="img"
         aria-label={label}
         onPointerDown={(event) => {
@@ -127,7 +127,11 @@ export const SignaturePad = forwardRef<
           drawing.current = false;
         }}
       />
-      {cleared && <span className="ui-signature__hint">{label}</span>}
+      {cleared && (
+        <span className="pointer-events-none absolute top-1/2 right-4 left-4 -translate-y-1/2 text-center text-sm text-muted-foreground">
+          {label}
+        </span>
+      )}
     </div>
   );
 });

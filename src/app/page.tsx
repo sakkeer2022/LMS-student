@@ -10,11 +10,11 @@ import { Tutors } from "@/features/landing/tutors";
 export default async function LandingPage() {
   const data = await getLandingData();
   return (
-    <main id="main" className="lp">
+    <main id="main" className="bg-card">
       <Hero />
       <Categories counts={data.resourceCounts} />
       <Journey />
-      <div className="lp-dark">
+      <div className="bg-[#0f0e15] text-white">
         <Tutors tutors={data.tutors} />
         <FacultyCta />
         <Stats stats={data.stats} />

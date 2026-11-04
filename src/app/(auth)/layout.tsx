@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
+import { AuthPage } from "@/components/auth/auth-page";
 import { BrandPanel } from "@/features/auth/components/brand-panel";
 import { getLandingData } from "@/features/landing/data";
-import "@/features/auth/login.css";
 
 export default async function AuthLayout({
   children,
@@ -10,16 +10,17 @@ export default async function AuthLayout({
 }) {
   const { stats } = await getLandingData();
   return (
-    <div className="login">
-      <BrandPanel
-        eyebrow="TUITION THAT FOLLOWS YOUR SYLLABUS"
-        title="Learn from tutors who teach your exact board, subject and class."
-        copy="1:1 online sessions for CBSE, ICSE, State Board, university and JEE / NEET learners — with a free study library that opens before you pay anything."
-        stats={stats}
-      />
-      <main id="main" className="login-panel">
-        {children}
-      </main>
-    </div>
+    <AuthPage
+      brand={
+        <BrandPanel
+          eyebrow="TUITION THAT FOLLOWS YOUR SYLLABUS"
+          title="Learn from tutors who teach your exact board, subject and class."
+          copy="1:1 online sessions for CBSE, ICSE, State Board, university and JEE / NEET learners — with a free study library that opens before you pay anything."
+          stats={stats}
+        />
+      }
+    >
+      {children}
+    </AuthPage>
   );
 }
