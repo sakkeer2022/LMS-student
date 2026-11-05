@@ -6,7 +6,7 @@ import { Button } from "@/components/shadcn/button";
 import { Checkbox } from "@/components/shadcn/checkbox";
 import { Label } from "@/components/shadcn/label";
 import { fetchPolicies, policyFileUrl, type PolicyView } from "../api";
-import { profileSummary, type LearningDraft } from "../catalogue";
+import { groupPath, groupTitle, type LearningDraft } from "../catalogue";
 import { relationshipLabel } from "../schema";
 import type { GuardianDetails } from "./guardian-step";
 
@@ -125,14 +125,15 @@ export function ReviewStep({
           label="Student"
           value={studentName}
         />
-        {profile && (
+        {profile?.groups.map((group, index) => (
           <RecapRow
+            key={index}
             icon={<BookOpen aria-hidden className="size-5" />}
-            label="Class, board & subjects"
-            value={profileSummary(profile)}
-            detail={profile.subjects.map((subject) => subject.name).join(", ")}
+            label={groupPath(group) || "What you want to learn"}
+            value={groupTitle(group)}
+            detail={group.subjects.map((subject) => subject.name).join(", ")}
           />
-        )}
+        ))}
         {guardian && (
           <RecapRow
             icon={<Users aria-hidden className="size-5" />}

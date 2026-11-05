@@ -233,7 +233,7 @@ export function AuthSecondaryButton(
 export function AuthSuccess({ children }: { children: ReactNode }) {
   return (
     <div className="flex w-full max-w-[420px] flex-col gap-6">
-      <span className="flex size-16 items-center justify-center rounded-pill bg-success-subtle">
+      <span className="flex size-16 items-center justify-center rounded-pill bg-success-subtle ring-8 ring-success-subtle/40 motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-500">
         <Image src="/auth/icon-circle-check.svg" alt="" width={20} height={20} />
       </span>
       {children}

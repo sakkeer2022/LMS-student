@@ -74,10 +74,7 @@ export interface RegisterRequest {
   password: string;
   timezone: string;
   learningProfile: {
-    categoryId: string;
-    boardId: string | null;
-    levelId: string | null;
-    teachingLanguageId: string;
+    /** Everything the student wants to learn, from any branch of the tree */
     curriculumIds: string[];
   };
   guardian?: {

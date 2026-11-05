@@ -50,7 +50,7 @@ export function VerifyEmailDialog({
           : "Unable to send the code. Try again.",
       );
     } finally {
-      setPending(false);
+      setSending(false);
     }
   }
 
@@ -110,7 +110,11 @@ export function VerifyEmailDialog({
       open={open}
       onClose={onClose}
       title="Verify your email"
-      subtitle={`We sent a 6-digit code to ${maskEmail(email)}${minutes ? `. It expires in ${minutes} minutes.` : "."}`}
+      subtitle={
+        challenge
+          ? `We sent a 6-digit code to ${maskEmail(email)}${minutes ? `. It expires in ${minutes} minutes.` : "."}`
+          : `Sending a 6-digit code to ${maskEmail(email)}…`
+      }
       footer={
         <>
           <Button
@@ -150,7 +154,11 @@ export function VerifyEmailDialog({
           onClick={() => void send()}
           disabled={pending || sending || wait > 0}
         >
-          {wait > 0 ? `Resend code in ${wait}s` : "Resend code"}
+          {sending
+            ? "Sending…"
+            : wait > 0
+              ? `Resend code in ${wait}s`
+              : "Resend code"}
         </Button>
       </p>
     </AppDialog>

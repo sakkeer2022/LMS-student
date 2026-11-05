@@ -7,9 +7,12 @@ import {
   parseDisplayDate,
 } from "@/lib/dates";
 import {
-  isLearningComplete,
-  profileSummary,
-  type LearningDraft,
+  addGroup,
+  allCurriculumIds,
+  groupPath,
+  groupTitle,
+  isGroupComplete,
+  type LearningGroup,
 } from "@/features/signup/catalogue";
 import { countryOfMobile, normalizeMobile, type Country } from "@/lib/regions";
 import {
@@ -178,50 +181,104 @@ describe("guardian contact", () => {
   });
 });
 
-describe("learning profile", () => {
+describe("learning list", () => {
   const leaf = { requiresBoard: true, requiresLevel: true };
   const pick = { id: "x", name: "X" };
 
-  it("needs the board and class the leaf asks for, a subject and a language", () => {
-    const base = {
-      leaf,
-      board: pick,
-      level: pick,
-      subjects: [pick],
-      teachingLanguageId: "l",
-    };
-    expect(isLearningComplete(base)).toBe(true);
-    expect(isLearningComplete({ ...base, board: null })).toBe(false);
-    expect(isLearningComplete({ ...base, level: null })).toBe(false);
-    expect(isLearningComplete({ ...base, subjects: [] })).toBe(false);
-    expect(isLearningComplete({ ...base, teachingLanguageId: null })).toBe(
-      false,
-    );
-    expect(isLearningComplete({ ...base, leaf: null })).toBe(false);
+  it("needs the board and class the leaf asks for, and a subject", () => {
+    const base = { leaf, board: pick, level: pick, subjects: [pick] };
+    expect(isGroupComplete(base)).toBe(true);
+    expect(isGroupComplete({ ...base, board: null })).toBe(false);
+    expect(isGroupComplete({ ...base, level: null })).toBe(false);
+    expect(isGroupComplete({ ...base, subjects: [] })).toBe(false);
+    expect(isGroupComplete({ ...base, leaf: null })).toBe(false);
   });
 
   it("does not ask for a board or class the leaf does not use", () => {
     expect(
-      isLearningComplete({
+      isGroupComplete({
         leaf: { requiresBoard: false, requiresLevel: false },
         board: null,
         level: null,
         subjects: [pick],
-        teachingLanguageId: "l",
       }),
     ).toBe(true);
   });
 
-  it("summarises as class and board, or the category when there are neither", () => {
-    const draft: LearningDraft = {
-      trail: [{ id: "c", code: "k12", name: "K-12", isLeaf: true }],
-      board: { id: "b", name: "CBSE" },
-      level: { id: "l", name: "Class 10" },
-      subjects: [],
-      teachingLanguageId: "t",
-      curriculumIds: [],
-    };
-    expect(profileSummary(draft)).toBe("Class 10 · CBSE");
-    expect(profileSummary({ ...draft, board: null, level: null })).toBe("K-12");
+  const category = (id: string, name: string, isLeaf: boolean) => ({
+    id,
+    code: id,
+    name,
+    isLeaf,
+  });
+  const group = (over: Partial<LearningGroup> = {}): LearningGroup => ({
+    trail: [
+      category("academic", "Academic", false),
+      category("school", "School", false),
+      category("k12", "K-12", true),
+    ],
+    board: { id: "cbse", name: "CBSE" },
+    level: { id: "c9", name: "Class 9" },
+    subjects: [{ id: "phy", name: "Physics" }],
+    curriculumIds: ["cur-phy"],
+    ...over,
+  });
+  const guitar = group({
+    trail: [
+      category("non-academic", "Non-academic", false),
+      category("music", "Music", false),
+      category("guitar", "Guitar", true),
+    ],
+    board: null,
+    level: null,
+    subjects: [{ id: "acoustic", name: "Acoustic guitar" }],
+    curriculumIds: ["cur-guitar"],
+  });
+
+  it("titles a group by class and board, or just the leaf, with where it sits above", () => {
+    expect(groupTitle(group())).toBe("K-12 · Class 9 · CBSE");
+    expect(groupPath(group())).toBe("Academic › School");
+    expect(groupTitle(guitar)).toBe("Guitar");
+    expect(groupPath(guitar)).toBe("Non-academic › Music");
+  });
+
+  it("keeps academic and non-academic groups side by side", () => {
+    const jee = group({
+      trail: [
+        category("academic", "Academic", false),
+        category("jee", "JEE / NEET", true),
+      ],
+      board: null,
+      level: { id: "jee-main", name: "JEE Main" },
+      subjects: [{ id: "phy", name: "Physics" }],
+      curriculumIds: ["cur-jee-phy"],
+    });
+    const list = [group(), jee, guitar].reduce(
+      (all, g) => addGroup(all, g),
+      [] as LearningGroup[],
+    );
+    expect(list).toHaveLength(3);
+    expect(allCurriculumIds({ groups: list })).toEqual([
+      "cur-phy",
+      "cur-jee-phy",
+      "cur-guitar",
+    ]);
+  });
+
+  it("joins a repeat of the same leaf, board and class instead of listing it twice", () => {
+    const more = group({
+      subjects: [
+        { id: "phy", name: "Physics" },
+        { id: "chem", name: "Chemistry" },
+      ],
+      curriculumIds: ["cur-phy", "cur-chem"],
+    });
+    const list = addGroup([group()], more);
+    expect(list).toHaveLength(1);
+    expect(list[0]?.subjects.map((s) => s.name)).toEqual([
+      "Physics",
+      "Chemistry",
+    ]);
+    expect(list[0]?.curriculumIds).toEqual(["cur-phy", "cur-chem"]);
   });
 });

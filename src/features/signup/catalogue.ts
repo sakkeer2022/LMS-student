@@ -22,19 +22,20 @@ export interface LeafDetail extends Category {
   subjects: Option[];
 }
 
-export interface TeachingLanguage extends Option {
-  code: string;
-}
-
-export interface LearningDraft {
+/** One thing the student wants to learn: a leaf with its board and class where it asks for them, and subjects. */
+export interface LearningGroup {
   /** The chosen categories from the root down to the bookable leaf */
   trail: Category[];
   board: Option | null;
   level: Option | null;
   subjects: Option[];
-  teachingLanguageId: string;
-  /** One active curriculum per chosen subject, resolved when the step is submitted */
+  /** The active curriculum of each subject, same order as `subjects`, resolved when the group is added */
   curriculumIds: string[];
+}
+
+/** Everything the student wants to learn. Groups from any branch can be mixed (Class 9 Physics, JEE, Guitar). */
+export interface LearningDraft {
+  groups: LearningGroup[];
 }
 
 const query = (params: Record<string, string | undefined>): string => {
@@ -65,31 +66,59 @@ export const resolveOffering = (
     `/catalogue/category-tree/leaves/${encodeURIComponent(leafId)}/offering${query(choice)}`,
   ).then((response) => response.data.curriculumId);
 
-export const fetchTeachingLanguages = () =>
-  api<TeachingLanguage[]>("/catalogue/teaching-languages?limit=100").then(
-    (response) => response.data,
-  );
-
-/** Whether the choices made so far are enough to leave the step. */
-export function isLearningComplete(input: {
+/** Whether a group being built has everything its leaf asks for. */
+export function isGroupComplete(input: {
   leaf: Pick<LeafDetail, "requiresBoard" | "requiresLevel"> | null;
   board: Option | null;
   level: Option | null;
   subjects: Option[];
-  teachingLanguageId: string | null;
 }): boolean {
   const { leaf } = input;
   return Boolean(
     leaf &&
     (!leaf.requiresBoard || input.board) &&
     (!leaf.requiresLevel || input.level) &&
-    input.subjects.length > 0 &&
-    input.teachingLanguageId,
+    input.subjects.length > 0,
   );
 }
 
-/** "Class 10 · CBSE", or the category name when the leaf has neither. */
-export function profileSummary(draft: LearningDraft): string {
-  const parts = [draft.level?.name, draft.board?.name].filter(Boolean);
-  return parts.length ? parts.join(" · ") : (draft.trail.at(-1)?.name ?? "");
+const keyOf = (group: LearningGroup) =>
+  [group.trail.at(-1)?.id, group.board?.id, group.level?.id].join("|");
+
+/** Adds a group; the same leaf, board and class again joins the existing group instead of repeating it. */
+export function addGroup(
+  groups: LearningGroup[],
+  group: LearningGroup,
+): LearningGroup[] {
+  const at = groups.findIndex((g) => keyOf(g) === keyOf(group));
+  const existing = groups[at];
+  if (!existing) return [...groups, group];
+  const merged = [...existing.subjects];
+  const ids = [...existing.curriculumIds];
+  group.subjects.forEach((subject, i) => {
+    if (merged.some((s) => s.id === subject.id)) return;
+    merged.push(subject);
+    ids.push(group.curriculumIds[i]!);
+  });
+  return groups.map((g, i) =>
+    i === at ? { ...g, subjects: merged, curriculumIds: ids } : g,
+  );
 }
+
+/** "K-12 · Class 9 · CBSE", or just "Guitar" when the leaf has neither. */
+export const groupTitle = (group: LearningGroup): string =>
+  [group.trail.at(-1)?.name, group.level?.name, group.board?.name]
+    .filter(Boolean)
+    .join(" · ");
+
+/** "Academic › School": where the leaf sits, shown small above the title. */
+export const groupPath = (group: LearningGroup): string =>
+  group.trail
+    .slice(0, -1)
+    .map((c) => c.name)
+    .join(" › ");
+
+/** Every chosen curriculum once, in the order the groups were added. */
+export const allCurriculumIds = (draft: LearningDraft): string[] => [
+  ...new Set(draft.groups.flatMap((g) => g.curriculumIds)),
+];

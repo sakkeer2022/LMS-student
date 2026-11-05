@@ -1,5 +1,4 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthHead } from "@/components/auth/auth-controls";
 import { Button } from "@/components/shadcn/button";
@@ -10,6 +9,7 @@ import {
   type AccountDraft,
   type AccountSubmission,
 } from "./components/account-step";
+import { AccountCreated } from "./components/account-created";
 import { ConsentDialog } from "./components/consent-dialog";
 import { GuardianStep, type GuardianDetails } from "./components/guardian-step";
 import { LearningStep } from "./components/learning-step";
@@ -18,7 +18,7 @@ import { Stepper, type Step } from "./components/stepper";
 import { VerifyEmailDialog } from "./components/verify-email-dialog";
 import { registerStudent, type ConsentReceipt } from "./api";
 import { ApiError } from "@/lib/api/contracts";
-import type { LearningDraft } from "./catalogue";
+import { allCurriculumIds, type LearningDraft } from "./catalogue";
 
 const EMPTY: AccountDraft = {
   fullName: "",
@@ -45,7 +45,11 @@ export function SignupFlow() {
   const [profile, setProfile] = useState<LearningDraft | null>(null);
   const [guardian, setGuardian] = useState<GuardianDetails | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
-  const router = useRouter();
+  const [created, setCreated] = useState<{
+    name: string;
+    email: string;
+    subjects: number;
+  } | null>(null);
   const [dialog, setDialog] = useState<"verify" | "consent" | null>(null);
 
   function load(): void {
@@ -93,8 +97,7 @@ export function SignupFlow() {
   }
 
   async function createAccount(acceptedPolicyIds: string[]): Promise<void> {
-    const leaf = profile?.trail.at(-1);
-    if (!submission || !emailToken || !profile || !leaf) return;
+    if (!submission || !emailToken || !profile) return;
     setCreateError(null);
     try {
       await registerStudent({
@@ -104,13 +107,7 @@ export function SignupFlow() {
         mobileNumber: submission.e164,
         password: submission.password,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        learningProfile: {
-          categoryId: leaf.id,
-          boardId: profile.board?.id ?? null,
-          levelId: profile.level?.id ?? null,
-          teachingLanguageId: profile.teachingLanguageId,
-          curriculumIds: profile.curriculumIds,
-        },
+        learningProfile: { curriculumIds: allCurriculumIds(profile) },
         ...(guardian && {
           guardian: {
             fullName: guardian.fullName,
@@ -123,7 +120,11 @@ export function SignupFlow() {
         ...(needsConsent && consent && { consentToken: consent.consentToken }),
         acceptedPolicyIds,
       });
-      router.push("/login");
+      setCreated({
+        name: submission.fullName,
+        email: submission.email,
+        subjects: profile.groups.reduce((sum, g) => sum + g.subjects.length, 0),
+      });
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
         setCreateError(
@@ -153,9 +154,18 @@ export function SignupFlow() {
       </div>
     );
   }
+  if (created)
+    return (
+      <div className="m-auto flex w-full justify-center">
+        <AccountCreated {...created} />
+      </div>
+    );
   if (!countries) {
     return (
-      <div className="m-auto flex w-full max-w-[681px] flex-col gap-6" aria-busy="true">
+      <div
+        className="m-auto flex w-full max-w-[681px] flex-col gap-6"
+        aria-busy="true"
+      >
         <p className="text-sm text-text-secondary">Loading…</p>
       </div>
     );
