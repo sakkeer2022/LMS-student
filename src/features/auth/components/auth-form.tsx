@@ -2,12 +2,13 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
-  LoginCheckbox,
-  LoginField,
-  LoginForm,
-  LoginHeading,
-  LoginSubmit,
-} from "@/components/ui/login-controls";
+  AuthCheckbox,
+  AuthError,
+  AuthField,
+  AuthFormShell,
+  AuthHead,
+  AuthSubmit,
+} from "@/components/auth/auth-controls";
 
 import { api } from "@/lib/api/client";
 import { loginSchema } from "../schemas/auth";
@@ -103,61 +104,61 @@ export function AuthForm() {
   }
 
   return (
-    <LoginForm
+    <AuthFormShell
       ref={form}
       onSubmit={submit}
       noValidate
       aria-label="Log in"
       pending={pending}
     >
-      <div>
-        <LoginHeading>Log in</LoginHeading>
-        <p className="login-subtitle">
-          New to Amentorz? Create an account — the free library opens straight away.
-        </p>
-      </div>
-      <div className="login-fields">
-        <LoginField
+      <AuthHead
+        title="Log in"
+        lead="New to Amentorz? Create an account — the free library opens straight away."
+      />
+      <div className="flex flex-col gap-4">
+        <AuthField
           name="email"
           label="Email address"
           type="email"
-          icon="/auth/icon-mail.svg"
+          icon="mail"
           autoComplete="email"
           error={fields.email}
           required
         />
-        <LoginField
+        <AuthField
           name="password"
           label="Password"
           type="password"
-          icon="/auth/icon-lock.svg"
+          icon="lock"
           autoComplete="current-password"
           error={fields.password}
           reveal
           required
         />
       </div>
-      {error && (
-        <p className="login-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="login-options">
-        <LoginCheckbox name="keepSignedIn" label="Keep me signed in" />
-        <Link className="login-link" href="/recovery">
+      {error && <AuthError>{error}</AuthError>}
+      <div className="flex h-14 items-center justify-between gap-3">
+        <AuthCheckbox name="keepSignedIn" label="Keep me signed in" />
+        <Link
+          className="text-sm font-semibold text-accent-foreground hover:underline"
+          href="/recovery"
+        >
           Forgot password?
         </Link>
       </div>
-      <LoginSubmit pending={pending}>
+      <AuthSubmit pending={pending}>
         {pending ? "Logging in…" : "Log in"}
-      </LoginSubmit>
-      <p className="login-switch">
-        Don’t have an account? <Link href="/signup">Create account</Link>
+      </AuthSubmit>
+      <p className="text-center text-sm text-accent-foreground">
+        Don’t have an account?{" "}
+        <Link className="font-semibold hover:underline" href="/signup">
+          Create account
+        </Link>
       </p>
-      <p className="login-terms">
-        By continuing you agree to the Terms of Use and Privacy Policy. Sessions may be recorded, where enabled, for
-        quality and safety.
+      <p className="text-xs text-muted-foreground">
+        By continuing you agree to the Terms of Use and Privacy Policy. Sessions
+        may be recorded, where enabled, for quality and safety.
       </p>
-    </LoginForm>
+    </AuthFormShell>
   );
 }
