@@ -58,6 +58,7 @@
   --error-subtle: #fee2e2;
   --error-foreground: #991b1b;
   --info-subtle: #dbeafe;
+  --info-border: #2563eb;
   --info-foreground: #1e40af;
 
   --radius: 6px;
@@ -114,6 +115,7 @@
   --color-error-subtle: var(--error-subtle);
   --color-error-foreground: var(--error-foreground);
   --color-info-subtle: var(--info-subtle);
+  --color-info-border: var(--info-border);
   --color-info-foreground: var(--info-foreground);
 
   --radius-sm: var(--radius);

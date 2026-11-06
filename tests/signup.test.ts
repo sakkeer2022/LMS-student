@@ -6,8 +6,21 @@ import {
   parseCalendarDate,
   parseDisplayDate,
 } from "@/lib/dates";
+import {
+  addGroup,
+  allCurriculumIds,
+  groupPath,
+  groupTitle,
+  isGroupComplete,
+  type LearningGroup,
+} from "@/features/signup/catalogue";
 import { countryOfMobile, normalizeMobile, type Country } from "@/lib/regions";
-import { accountSchema } from "@/features/signup/schema";
+import {
+  GUARDIAN_RELATIONSHIPS,
+  accountSchema,
+  guardianSchema,
+  relationshipLabel,
+} from "@/features/signup/schema";
 
 const countries: Country[] = [
   {
@@ -121,5 +134,151 @@ describe("account schema", () => {
     expect(
       accountSchema.safeParse({ ...valid, dateOfBirth: iso }).success,
     ).toBe(false);
+  });
+});
+
+describe("guardian contact", () => {
+  const valid = {
+    fullName: " Suresh Sharma ",
+    relationship: "father",
+    mobileNumber: "+91 98860 44120",
+    email: "Suresh.Sharma@Outlook.com",
+    notifyReports: true,
+  };
+
+  it("trims the name and lowercases the email", () => {
+    const parsed = guardianSchema.parse(valid);
+    expect(parsed.fullName).toBe("Suresh Sharma");
+    expect(parsed.email).toBe("suresh.sharma@outlook.com");
+  });
+
+  it("asks for each missing field and rejects an unknown relationship", () => {
+    const result = guardianSchema.safeParse({
+      ...valid,
+      fullName: "",
+      relationship: "",
+      email: "nope",
+    });
+    expect(result.success).toBe(false);
+    const fields = result.success
+      ? []
+      : result.error.issues.map((issue) => issue.path[0]);
+    expect(fields).toEqual(
+      expect.arrayContaining(["fullName", "relationship", "email"]),
+    );
+  });
+
+  it("names every relationship the backend accepts", () => {
+    expect(GUARDIAN_RELATIONSHIPS.map((item) => item.value)).toEqual([
+      "father",
+      "mother",
+      "legal_guardian",
+      "grandparent",
+      "sibling",
+      "other",
+    ]);
+    expect(relationshipLabel("legal_guardian")).toBe("Legal guardian");
+  });
+});
+
+describe("learning list", () => {
+  const leaf = { requiresBoard: true, requiresLevel: true };
+  const pick = { id: "x", name: "X" };
+
+  it("needs the board and class the leaf asks for, and a subject", () => {
+    const base = { leaf, board: pick, level: pick, subjects: [pick] };
+    expect(isGroupComplete(base)).toBe(true);
+    expect(isGroupComplete({ ...base, board: null })).toBe(false);
+    expect(isGroupComplete({ ...base, level: null })).toBe(false);
+    expect(isGroupComplete({ ...base, subjects: [] })).toBe(false);
+    expect(isGroupComplete({ ...base, leaf: null })).toBe(false);
+  });
+
+  it("does not ask for a board or class the leaf does not use", () => {
+    expect(
+      isGroupComplete({
+        leaf: { requiresBoard: false, requiresLevel: false },
+        board: null,
+        level: null,
+        subjects: [pick],
+      }),
+    ).toBe(true);
+  });
+
+  const category = (id: string, name: string, isLeaf: boolean) => ({
+    id,
+    code: id,
+    name,
+    isLeaf,
+  });
+  const group = (over: Partial<LearningGroup> = {}): LearningGroup => ({
+    trail: [
+      category("academic", "Academic", false),
+      category("school", "School", false),
+      category("k12", "K-12", true),
+    ],
+    board: { id: "cbse", name: "CBSE" },
+    level: { id: "c9", name: "Class 9" },
+    subjects: [{ id: "phy", name: "Physics" }],
+    curriculumIds: ["cur-phy"],
+    ...over,
+  });
+  const guitar = group({
+    trail: [
+      category("non-academic", "Non-academic", false),
+      category("music", "Music", false),
+      category("guitar", "Guitar", true),
+    ],
+    board: null,
+    level: null,
+    subjects: [{ id: "acoustic", name: "Acoustic guitar" }],
+    curriculumIds: ["cur-guitar"],
+  });
+
+  it("titles a group by class and board, or just the leaf, with where it sits above", () => {
+    expect(groupTitle(group())).toBe("K-12 · Class 9 · CBSE");
+    expect(groupPath(group())).toBe("Academic › School");
+    expect(groupTitle(guitar)).toBe("Guitar");
+    expect(groupPath(guitar)).toBe("Non-academic › Music");
+  });
+
+  it("keeps academic and non-academic groups side by side", () => {
+    const jee = group({
+      trail: [
+        category("academic", "Academic", false),
+        category("jee", "JEE / NEET", true),
+      ],
+      board: null,
+      level: { id: "jee-main", name: "JEE Main" },
+      subjects: [{ id: "phy", name: "Physics" }],
+      curriculumIds: ["cur-jee-phy"],
+    });
+    const list = [group(), jee, guitar].reduce(
+      (all, g) => addGroup(all, g),
+      [] as LearningGroup[],
+    );
+    expect(list).toHaveLength(3);
+    expect(allCurriculumIds({ groups: list })).toEqual([
+      "cur-phy",
+      "cur-jee-phy",
+      "cur-guitar",
+    ]);
+  });
+
+  it("joins a repeat of the same leaf, board and class instead of listing it twice", () => {
+    const more = group({
+      subjects: [
+        { id: "phy", name: "Physics" },
+        { id: "chem", name: "Chemistry" },
+      ],
+      curriculumIds: ["cur-phy", "cur-chem"],
+    });
+    const list = addGroup([group()], more);
+    expect(list).toHaveLength(1);
+    expect(list[0]?.subjects.map((s) => s.name)).toEqual([
+      "Physics",
+      "Chemistry",
+    ]);
+    expect(list[0]?.curriculumIds).toEqual(["cur-phy", "cur-chem"]);
   });
 });

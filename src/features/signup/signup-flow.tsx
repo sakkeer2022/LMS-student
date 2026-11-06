@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { AuthHead } from "@/components/auth/auth-controls";
 import { Button } from "@/components/shadcn/button";
 import { completedYears } from "@/lib/dates";
@@ -10,10 +9,16 @@ import {
   type AccountDraft,
   type AccountSubmission,
 } from "./components/account-step";
+import { AccountCreated } from "./components/account-created";
 import { ConsentDialog } from "./components/consent-dialog";
+import { GuardianStep, type GuardianDetails } from "./components/guardian-step";
+import { LearningStep } from "./components/learning-step";
+import { ReviewStep } from "./components/review-step";
 import { Stepper, type Step } from "./components/stepper";
 import { VerifyEmailDialog } from "./components/verify-email-dialog";
-import type { ConsentReceipt } from "./api";
+import { registerStudent, type ConsentReceipt } from "./api";
+import { ApiError } from "@/lib/api/contracts";
+import { allCurriculumIds, type LearningDraft } from "./catalogue";
 
 const EMPTY: AccountDraft = {
   fullName: "",
@@ -37,6 +42,14 @@ export function SignupFlow() {
   const [submission, setSubmission] = useState<AccountSubmission | null>(null);
   const [emailToken, setEmailToken] = useState<string | null>(null);
   const [consent, setConsent] = useState<ConsentReceipt | null>(null);
+  const [profile, setProfile] = useState<LearningDraft | null>(null);
+  const [guardian, setGuardian] = useState<GuardianDetails | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [created, setCreated] = useState<{
+    name: string;
+    email: string;
+    subjects: number;
+  } | null>(null);
   const [dialog, setDialog] = useState<"verify" | "consent" | null>(null);
 
   function load(): void {
@@ -75,11 +88,56 @@ export function SignupFlow() {
       submission?.dateOfBirth === values.dateOfBirth;
     const receipt = sameStudent ? consent : null;
     const token = submission?.email === values.email ? emailToken : null;
+    if (guardian?.email === values.email) setGuardian(null);
     if (!sameStudent) setConsent(null);
     if (submission?.email !== values.email) setEmailToken(null);
     setDraft(raw);
     setSubmission(values);
     proceed({ token, receipt, needsConsent: minor });
+  }
+
+  async function createAccount(acceptedPolicyIds: string[]): Promise<void> {
+    if (!submission || !emailToken || !profile) return;
+    setCreateError(null);
+    try {
+      await registerStudent({
+        emailVerificationToken: emailToken,
+        fullName: submission.fullName,
+        dateOfBirth: submission.dateOfBirth,
+        mobileNumber: submission.e164,
+        password: submission.password,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        learningProfile: { curriculumIds: allCurriculumIds(profile) },
+        ...(guardian && {
+          guardian: {
+            fullName: guardian.fullName,
+            relationship: guardian.relationship,
+            mobileNumber: guardian.e164,
+            email: guardian.email,
+            receivesReportsAndReceipts: guardian.notifyReports,
+          },
+        }),
+        ...(needsConsent && consent && { consentToken: consent.consentToken }),
+        acceptedPolicyIds,
+      });
+      setCreated({
+        name: submission.fullName,
+        email: submission.email,
+        subjects: profile.groups.reduce((sum, g) => sum + g.subjects.length, 0),
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        setCreateError(
+          "This email already has an account. Sign in instead, or go back and use another email.",
+        );
+      } else if (error instanceof ApiError && error.status === 422) {
+        // An expired email check cannot be retried: ask for the code again
+        if (/verif/i.test(error.message)) setEmailToken(null);
+        setCreateError(error.message);
+      } else {
+        setCreateError("We could not create the account. Please try again.");
+      }
+    }
   }
 
   if (loadError) {
@@ -96,9 +154,18 @@ export function SignupFlow() {
       </div>
     );
   }
+  if (created)
+    return (
+      <div className="m-auto flex w-full justify-center">
+        <AccountCreated {...created} />
+      </div>
+    );
   if (!countries) {
     return (
-      <div className="m-auto flex w-full max-w-[681px] flex-col gap-6" aria-busy="true">
+      <div
+        className="m-auto flex w-full max-w-[681px] flex-col gap-6"
+        aria-busy="true"
+      >
         <p className="text-sm text-text-secondary">Loading…</p>
       </div>
     );
@@ -115,26 +182,39 @@ export function SignupFlow() {
           pending={dialog !== null}
           onSubmit={submitAccount}
         />
-      ) : (
-        <div className="flex w-full flex-col gap-6">
-          <AuthHead
-            title="Your learning profile"
-            lead="Step 2 of 4 · this step is being set up."
-            size="form"
-          />
-          <p className="rounded-md bg-sunken p-3 text-xs text-muted-foreground">
-            Your account details are kept while you wait.
-          </p>
-          <div className="flex items-center justify-between gap-3">
-            <Button variant="ghost" onClick={() => setStep(1)}>
-              Back
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/">Cancel</Link>
-            </Button>
-          </div>
-        </div>
-      )}
+      ) : step === 2 ? (
+        <LearningStep
+          value={profile}
+          onBack={() => setStep(1)}
+          onSubmit={(draft) => {
+            setProfile(draft);
+            setStep(3);
+          }}
+        />
+      ) : step === 3 && submission ? (
+        <GuardianStep
+          value={guardian}
+          countries={countries}
+          studentEmail={submission.email}
+          required={needsConsent}
+          onBack={() => setStep(2)}
+          onSubmit={(details) => {
+            setGuardian(details);
+            setStep(4);
+          }}
+        />
+      ) : submission ? (
+        <ReviewStep
+          country={submission.country.code}
+          studentName={submission.fullName}
+          profile={profile}
+          guardian={guardian}
+          minor={needsConsent}
+          error={createError}
+          onBack={() => setStep(3)}
+          onCreate={createAccount}
+        />
+      ) : null}
 
       {submission && (
         <>

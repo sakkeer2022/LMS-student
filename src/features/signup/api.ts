@@ -65,3 +65,31 @@ export function signConsent(input: {
     body: form,
   }).then((response) => response.data);
 }
+
+export interface RegisterRequest {
+  emailVerificationToken: string;
+  fullName: string;
+  dateOfBirth: string;
+  mobileNumber: string;
+  password: string;
+  timezone: string;
+  learningProfile: {
+    /** Everything the student wants to learn, from any branch of the tree */
+    curriculumIds: string[];
+  };
+  guardian?: {
+    fullName: string;
+    relationship: string;
+    mobileNumber: string;
+    email: string;
+    receivesReportsAndReceipts: boolean;
+  };
+  consentToken?: string;
+  acceptedPolicyIds: string[];
+}
+
+export const registerStudent = (body: RegisterRequest) =>
+  api<{ userId: string }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(body),
+  }).then((response) => response.data);
