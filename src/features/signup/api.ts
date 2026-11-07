@@ -40,6 +40,66 @@ export const verifyEmailCode = (challengeId: string, otp: string) =>
     },
   ).then((response) => response.data);
 
+export interface ReferralSource {
+  code: string;
+  name: string;
+}
+
+export const fetchReferralSources = () =>
+  api<ReferralSource[]>("/auth/registration/referral-sources").then(
+    (response) => response.data,
+  );
+
+/** The optional "how did you find us" answer: a source code, plus the student's words for Other. */
+export interface ReferralAnswer {
+  sourceCode: string;
+  other?: string;
+}
+
+export type EducationLevel =
+  "school" | "undergraduate" | "postgraduate" | "working" | "other";
+
+export const EDUCATION_LEVELS: { value: EducationLevel; label: string }[] = [
+  { value: "school", label: "School" },
+  { value: "undergraduate", label: "Undergraduate" },
+  { value: "postgraduate", label: "Postgraduate" },
+  { value: "working", label: "Working professional" },
+  { value: "other", label: "Other" },
+];
+
+/** What the education card holds while it is filled in; blanks are left out of the request. */
+export interface EducationDraft {
+  level: EducationLevel | "";
+  institutionName: string;
+  detail: string;
+}
+
+export const EMPTY_EDUCATION: EducationDraft = {
+  level: "",
+  institutionName: "",
+  detail: "",
+};
+
+/** The request body's education, or undefined when nothing was filled in. */
+export function educationAnswer(draft: EducationDraft | undefined) {
+  if (!draft) return undefined;
+  const institutionName = draft.institutionName.trim();
+  const detail = draft.detail.trim();
+  const answer = {
+    ...(draft.level && { level: draft.level }),
+    ...(institutionName && { institutionName }),
+    ...(detail && { detail }),
+  };
+  return Object.keys(answer).length ? answer : undefined;
+}
+
+/** The request body's referral, or undefined when none was picked; Other's text is trimmed and dropped if blank. */
+export function referralAnswer(answer: ReferralAnswer | null) {
+  if (!answer) return undefined;
+  const other = answer.sourceCode === "other" ? answer.other?.trim() : "";
+  return { sourceCode: answer.sourceCode, ...(other && { other }) };
+}
+
 export const fetchPolicies = (country: string) =>
   api<PolicyView[]>(
     `/policies/current?country=${encodeURIComponent(country)}`,
@@ -83,6 +143,12 @@ export interface RegisterRequest {
     mobileNumber: string;
     email: string;
     receivesReportsAndReceipts: boolean;
+  };
+  referral?: { sourceCode: string; other?: string };
+  education?: {
+    level?: EducationLevel;
+    institutionName?: string;
+    detail?: string;
   };
   consentToken?: string;
   acceptedPolicyIds: string[];

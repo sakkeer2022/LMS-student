@@ -17,7 +17,13 @@ import { LearningStep } from "./components/learning-step";
 import { ReviewStep } from "./components/review-step";
 import { Stepper, type Step } from "./components/stepper";
 import { VerifyEmailDialog } from "./components/verify-email-dialog";
-import { registerStudent, type ConsentReceipt } from "./api";
+import {
+  educationAnswer,
+  referralAnswer,
+  registerStudent,
+  type ConsentReceipt,
+  type ReferralAnswer,
+} from "./api";
 import { ApiError } from "@/lib/api/contracts";
 import { allCurriculumIds, type LearningDraft } from "./catalogue";
 
@@ -97,7 +103,10 @@ export function SignupFlow() {
     proceed({ token, receipt, needsConsent: minor });
   }
 
-  async function createAccount(acceptedPolicyIds: string[]): Promise<void> {
+  async function createAccount(
+    acceptedPolicyIds: string[],
+    referral: ReferralAnswer | null,
+  ): Promise<void> {
     if (!submission || !emailToken || !profile) return;
     setCreateError(null);
     try {
@@ -117,6 +126,10 @@ export function SignupFlow() {
             email: guardian.email,
             receivesReportsAndReceipts: guardian.notifyReports,
           },
+        }),
+        ...(referralAnswer(referral) && { referral: referralAnswer(referral) }),
+        ...(educationAnswer(profile.education) && {
+          education: educationAnswer(profile.education),
         }),
         ...(needsConsent && consent && { consentToken: consent.consentToken }),
         acceptedPolicyIds,

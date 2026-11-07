@@ -10,8 +10,10 @@ import {
   type LearningDraft,
   type LearningGroup,
 } from "../catalogue";
+import { EMPTY_EDUCATION, type EducationDraft } from "../api";
 import { GroupBuilder } from "./group-builder";
 import { GroupCard } from "./learning-parts";
+import { EducationCard } from "./optional-questions";
 
 /**
  * Onboarding step 2: the student builds a list of everything they want to learn. One group at a time is built
@@ -29,6 +31,9 @@ export function LearningStep({
   onSubmit: (draft: LearningDraft) => void;
 }) {
   const [groups, setGroups] = useState<LearningGroup[]>(value?.groups ?? []);
+  const [education, setEducation] = useState<EducationDraft>(
+    value?.education ?? EMPTY_EDUCATION,
+  );
   // Open at first (nothing to show yet), then only when the student asks to add or edit
   const [building, setBuilding] = useState(groups.length === 0);
   const [editing, setEditing] = useState<LearningGroup | null>(null);
@@ -108,6 +113,8 @@ export function LearningStep({
         </button>
       )}
 
+      <EducationCard value={education} onChange={setEducation} />
+
       <div className="sticky bottom-0 -mx-1 flex flex-col gap-2 border-t border-border bg-background/90 px-1 py-3 backdrop-blur">
         {building && status.started && !status.adding && groups.length > 0 && (
           <p className="text-xs text-text-secondary" aria-live="polite">
@@ -122,7 +129,7 @@ export function LearningStep({
           <Button
             type="button"
             disabled={groups.length === 0 || editing !== null || status.adding}
-            onClick={() => onSubmit({ groups })}
+            onClick={() => onSubmit({ groups, education })}
           >
             Continue
           </Button>
