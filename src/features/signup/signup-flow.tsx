@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { AuthHead } from "@/components/auth/auth-controls";
 import { Button } from "@/components/shadcn/button";
+import { Skeleton } from "@/components/shadcn/skeleton";
 import { completedYears } from "@/lib/dates";
 import { fetchCountries, type Country } from "@/lib/regions";
 import {
@@ -161,14 +162,7 @@ export function SignupFlow() {
       </div>
     );
   if (!countries) {
-    return (
-      <div
-        className="m-auto flex w-full max-w-[681px] flex-col gap-6"
-        aria-busy="true"
-      >
-        <p className="text-sm text-text-secondary">Loading…</p>
-      </div>
-    );
+    return <SignupSkeleton />;
   }
 
   return (
@@ -240,6 +234,46 @@ export function SignupFlow() {
           />
         </>
       )}
+    </div>
+  );
+}
+
+/** The form's shape while the country list loads: the stepper, the heading and the first step's fields. */
+function SignupSkeleton() {
+  const field = (
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="h-11 w-full rounded-lg" />
+    </div>
+  );
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label="Loading the registration form"
+      className="m-auto flex w-full max-w-[681px] flex-col gap-6"
+    >
+      <div className="flex gap-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-6 w-24 rounded-full" />
+        ))}
+      </div>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-4 w-96 max-w-full" />
+      </div>
+      <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {field}
+          {field}
+        </div>
+        {field}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {field}
+          {field}
+        </div>
+      </div>
+      <Skeleton className="h-11 w-36 rounded-lg" />
     </div>
   );
 }
