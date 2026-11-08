@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AppDialog } from "@/components/forms/AppDialog";
 import { SignaturePad, type SignaturePadHandle } from "@/components/forms/SignaturePad";
 import { Button } from "@/components/shadcn/button";
+import { Skeleton } from "@/components/shadcn/skeleton";
 import { ApiError } from "@/lib/api/contracts";
 import {
   fetchPolicies,
@@ -140,8 +141,9 @@ export function ConsentDialog({
         <section className="flex flex-col gap-4 rounded-md bg-sunken p-4" aria-label="Document preview">
           <div className="flex items-center gap-3 text-sm font-semibold">
             <FileText size={20} aria-hidden />
-            <span>{policy?.title ?? "Loading…"}</span>
+            {policy ? <span>{policy.title}</span> : <Skeleton className="h-5 w-48" />}
           </div>
+          {!policy && <Skeleton className="h-60 w-full rounded-panel" aria-busy="true" />}
           {policy && (
             <iframe
               className="h-60 w-full rounded-panel border border-border bg-card"

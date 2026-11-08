@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/client";
+import type { EducationDraft } from "./api";
 
 /** Learner catalogue (category tree, ADR-0005). Public: no session is needed to read it. */
 
@@ -36,6 +37,8 @@ export interface LearningGroup {
 /** Everything the student wants to learn. Groups from any branch can be mixed (Class 9 Physics, JEE, Guitar). */
 export interface LearningDraft {
   groups: LearningGroup[];
+  /** The optional education card on the same step */
+  education?: EducationDraft;
 }
 
 const query = (params: Record<string, string | undefined>): string => {

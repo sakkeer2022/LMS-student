@@ -1,14 +1,23 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
-import { BookOpen, UserCircle, Users } from "lucide-react";
+import { BookOpen, GraduationCap, UserCircle, Users } from "lucide-react";
 import { AuthError, AuthHead } from "@/components/auth/auth-controls";
 import { Button } from "@/components/shadcn/button";
 import { Checkbox } from "@/components/shadcn/checkbox";
 import { Label } from "@/components/shadcn/label";
-import { fetchPolicies, policyFileUrl, type PolicyView } from "../api";
+import { Skeleton } from "@/components/shadcn/skeleton";
+import {
+  EDUCATION_LEVELS,
+  educationAnswer,
+  fetchPolicies,
+  policyFileUrl,
+  type PolicyView,
+  type ReferralAnswer,
+} from "../api";
 import { groupPath, groupTitle, type LearningDraft } from "../catalogue";
 import { relationshipLabel } from "../schema";
 import type { GuardianDetails } from "./guardian-step";
+import { ReferralCard } from "./optional-questions";
 
 type PolicyType = "terms_of_use" | "privacy_policy" | "child_safety_policy";
 
@@ -74,13 +83,18 @@ export function ReviewStep({
   minor: boolean;
   error?: string | null;
   onBack: () => void;
-  onCreate: (acceptedPolicyIds: string[]) => Promise<void>;
+  onCreate: (
+    acceptedPolicyIds: string[],
+    referral: ReferralAnswer | null,
+  ) => Promise<void>;
 }) {
   const [policies, setPolicies] = useState<PolicyView[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [accepted, setAccepted] = useState<Record<string, boolean>>({});
   const [creating, setCreating] = useState(false);
+  const [referral, setReferral] = useState<ReferralAnswer | null>(null);
+  const education = educationAnswer(profile?.education);
 
   useEffect(() => {
     let current = true;
@@ -134,6 +148,28 @@ export function ReviewStep({
             detail={group.subjects.map((subject) => subject.name).join(", ")}
           />
         ))}
+        {education && (
+          <RecapRow
+            icon={<GraduationCap aria-hidden className="size-5" />}
+            label="Studies"
+            value={
+              [
+                EDUCATION_LEVELS.find((l) => l.value === education.level)
+                  ?.label,
+                education.detail,
+              ]
+                .filter(Boolean)
+                .join(" · ") ||
+              education.institutionName ||
+              ""
+            }
+            detail={
+              education.level || education.detail
+                ? education.institutionName
+                : undefined
+            }
+          />
+        )}
         {guardian && (
           <RecapRow
             icon={<Users aria-hidden className="size-5" />}
@@ -142,6 +178,8 @@ export function ReviewStep({
           />
         )}
       </div>
+
+      <ReferralCard value={referral} onChange={setReferral} />
 
       {failed && (
         <div className="flex flex-col items-start gap-3">
@@ -155,9 +193,14 @@ export function ReviewStep({
         </div>
       )}
       {!failed && !policies && (
-        <p className="text-sm text-text-secondary" aria-busy="true">
-          Loading the policies…
-        </p>
+        <div className="flex flex-col gap-5" role="status" aria-busy="true" aria-label="Loading the policies">
+          {Array.from({ length: wanted.length }, (_, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <Skeleton className="size-5 shrink-0 rounded-[4px]" />
+              <Skeleton className="h-5 w-full max-w-md" />
+            </div>
+          ))}
+        </div>
       )}
 
       {terms && privacy && (
@@ -206,8 +249,8 @@ export function ReviewStep({
           disabled={!allAccepted || creating}
           onClick={() => {
             setCreating(true);
-            onCreate(required.map((policy) => policy!.id)).finally(() =>
-              setCreating(false),
+            onCreate(required.map((policy) => policy!.id), referral).finally(
+              () => setCreating(false),
             );
           }}
         >

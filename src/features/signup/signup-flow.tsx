@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { AuthHead } from "@/components/auth/auth-controls";
 import { Button } from "@/components/shadcn/button";
+import { Skeleton } from "@/components/shadcn/skeleton";
 import { completedYears } from "@/lib/dates";
 import { fetchCountries, type Country } from "@/lib/regions";
 import {
@@ -16,7 +17,13 @@ import { LearningStep } from "./components/learning-step";
 import { ReviewStep } from "./components/review-step";
 import { Stepper, type Step } from "./components/stepper";
 import { VerifyEmailDialog } from "./components/verify-email-dialog";
-import { registerStudent, type ConsentReceipt } from "./api";
+import {
+  educationAnswer,
+  referralAnswer,
+  registerStudent,
+  type ConsentReceipt,
+  type ReferralAnswer,
+} from "./api";
 import { ApiError } from "@/lib/api/contracts";
 import { allCurriculumIds, type LearningDraft } from "./catalogue";
 
@@ -37,6 +44,8 @@ const EMPTY: AccountDraft = {
 export function SignupFlow() {
   const [countries, setCountries] = useState<Country[] | null>(null);
   const [loadError, setLoadError] = useState(false);
+  // Set when the first load is taking long, so the student knows it has not failed
+  const [slow, setSlow] = useState(false);
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<AccountDraft>(EMPTY);
   const [submission, setSubmission] = useState<AccountSubmission | null>(null);
@@ -59,6 +68,11 @@ export function SignupFlow() {
       .catch(() => setLoadError(true));
   }
   useEffect(load, []);
+  useEffect(() => {
+    if (countries || loadError) return setSlow(false);
+    const timer = setTimeout(() => setSlow(true), 6000);
+    return () => clearTimeout(timer);
+  }, [countries, loadError]);
 
   const age = submission ? completedYears(submission.dateOfBirth) : null;
   const needsConsent = Boolean(
@@ -96,7 +110,10 @@ export function SignupFlow() {
     proceed({ token, receipt, needsConsent: minor });
   }
 
-  async function createAccount(acceptedPolicyIds: string[]): Promise<void> {
+  async function createAccount(
+    acceptedPolicyIds: string[],
+    referral: ReferralAnswer | null,
+  ): Promise<void> {
     if (!submission || !emailToken || !profile) return;
     setCreateError(null);
     try {
@@ -116,6 +133,10 @@ export function SignupFlow() {
             email: guardian.email,
             receivesReportsAndReceipts: guardian.notifyReports,
           },
+        }),
+        ...(referralAnswer(referral) && { referral: referralAnswer(referral) }),
+        ...(educationAnswer(profile.education) && {
+          education: educationAnswer(profile.education),
         }),
         ...(needsConsent && consent && { consentToken: consent.consentToken }),
         acceptedPolicyIds,
@@ -161,14 +182,7 @@ export function SignupFlow() {
       </div>
     );
   if (!countries) {
-    return (
-      <div
-        className="m-auto flex w-full max-w-[681px] flex-col gap-6"
-        aria-busy="true"
-      >
-        <p className="text-sm text-text-secondary">Loading…</p>
-      </div>
-    );
+    return <SignupSkeleton slow={slow} />;
   }
 
   return (
@@ -239,6 +253,52 @@ export function SignupFlow() {
             }}
           />
         </>
+      )}
+    </div>
+  );
+}
+
+/** The form's shape while the country list loads: the stepper, the heading and the first step's fields. */
+function SignupSkeleton({ slow }: { slow: boolean }) {
+  const field = (
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="h-11 w-full rounded-lg" />
+    </div>
+  );
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label="Loading the registration form"
+      className="m-auto flex w-full max-w-[681px] flex-col gap-6"
+    >
+      <div className="flex gap-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-6 w-24 rounded-full" />
+        ))}
+      </div>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-4 w-96 max-w-full" />
+      </div>
+      <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {field}
+          {field}
+        </div>
+        {field}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {field}
+          {field}
+        </div>
+      </div>
+      <Skeleton className="h-11 w-36 rounded-lg" />
+      {slow && (
+        <p className="text-sm text-text-secondary" aria-live="polite">
+          This is taking longer than usual. Please keep this page open; we are
+          still trying.
+        </p>
       )}
     </div>
   );
