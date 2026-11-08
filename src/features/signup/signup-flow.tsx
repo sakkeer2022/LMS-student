@@ -44,6 +44,8 @@ const EMPTY: AccountDraft = {
 export function SignupFlow() {
   const [countries, setCountries] = useState<Country[] | null>(null);
   const [loadError, setLoadError] = useState(false);
+  // Set when the first load is taking long, so the student knows it has not failed
+  const [slow, setSlow] = useState(false);
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<AccountDraft>(EMPTY);
   const [submission, setSubmission] = useState<AccountSubmission | null>(null);
@@ -66,6 +68,11 @@ export function SignupFlow() {
       .catch(() => setLoadError(true));
   }
   useEffect(load, []);
+  useEffect(() => {
+    if (countries || loadError) return setSlow(false);
+    const timer = setTimeout(() => setSlow(true), 6000);
+    return () => clearTimeout(timer);
+  }, [countries, loadError]);
 
   const age = submission ? completedYears(submission.dateOfBirth) : null;
   const needsConsent = Boolean(
@@ -175,7 +182,7 @@ export function SignupFlow() {
       </div>
     );
   if (!countries) {
-    return <SignupSkeleton />;
+    return <SignupSkeleton slow={slow} />;
   }
 
   return (
@@ -252,7 +259,7 @@ export function SignupFlow() {
 }
 
 /** The form's shape while the country list loads: the stepper, the heading and the first step's fields. */
-function SignupSkeleton() {
+function SignupSkeleton({ slow }: { slow: boolean }) {
   const field = (
     <div className="flex flex-col gap-2">
       <Skeleton className="h-4 w-28" />
@@ -287,6 +294,12 @@ function SignupSkeleton() {
         </div>
       </div>
       <Skeleton className="h-11 w-36 rounded-lg" />
+      {slow && (
+        <p className="text-sm text-text-secondary" aria-live="polite">
+          This is taking longer than usual. Please keep this page open; we are
+          still trying.
+        </p>
+      )}
     </div>
   );
 }
