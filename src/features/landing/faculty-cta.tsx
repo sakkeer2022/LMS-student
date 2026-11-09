@@ -30,7 +30,7 @@ export function FacultyCta() {
             href={FACULTY_URL || "/become-a-tutor"}
             className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-card px-5 text-sm leading-5 font-semibold text-accent-foreground"
           >
-            Become a tutor
+            View Profile
             <ChevronRight size={20} aria-hidden />
           </Link>
         </div>
