@@ -24,8 +24,8 @@ export function isStudent(user: SessionUser) {
   return user.isActive && user.roles.some(role => role.name === STUDENT_ROLE);
 }
 
-/** Where a signed-in student lands when no destination was asked for (the dashboard screen is not designed yet). */
-export const STUDENT_HOME = '/';
+/** Where a signed-in student lands when no destination was asked for. */
+export const STUDENT_HOME = '/dashboard';
 
 export function safeRedirect(value: string | null, fallback = STUDENT_HOME) {
   if (!value || !value.startsWith('/') || value.startsWith('//') || /[\\\r\n]/.test(value)) return fallback;

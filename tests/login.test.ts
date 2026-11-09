@@ -14,9 +14,9 @@ describe("student login", () => {
 
   it("only redirects to paths inside the app", () => {
     expect(safeRedirect("/library")).toBe("/library");
-    expect(safeRedirect("//evil.example")).toBe("/");
-    expect(safeRedirect("https://evil.example")).toBe("/");
-    expect(safeRedirect("/a\\b")).toBe("/");
-    expect(safeRedirect(null)).toBe("/");
+    expect(safeRedirect("//evil.example")).toBe("/dashboard");
+    expect(safeRedirect("https://evil.example")).toBe("/dashboard");
+    expect(safeRedirect("/a\\b")).toBe("/dashboard");
+    expect(safeRedirect(null)).toBe("/dashboard");
   });
 });
