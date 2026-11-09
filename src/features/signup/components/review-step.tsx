@@ -114,22 +114,23 @@ export function ReviewStep({
   const byType = (type: PolicyType) =>
     policies?.find((policy) => policy.type === type);
   const required = wanted.map(byType);
-  const ready = required.every(Boolean);
-  const allAccepted =
-    ready && required.every((policy) => accepted[policy!.id] === true);
-  const toggle = (id: string) => (checked: boolean | "indeterminate") =>
-    setAccepted((state) => ({ ...state, [id]: checked === true }));
   const terms = byType("terms_of_use");
   const privacy = byType("privacy_policy");
+  const ready = required.every(Boolean);
+  // The guardian's approval is collected by the signature step, so the child safety policy has no
+  // checkbox; its id is still sent because the backend requires it for a minor.
+  const allAccepted =
+    ready &&
+    [terms, privacy].every((policy) => accepted[policy!.id] === true);
+  const toggle = (id: string) => (checked: boolean | "indeterminate") =>
+    setAccepted((state) => ({ ...state, [id]: checked === true }));
   const safety = byType("child_safety_policy");
 
   return (
     <div className="flex w-full flex-col gap-6">
       <AuthHead
         title="Review and consent"
-        lead={`Step 4 of 4 · check the details below, then accept ${
-          wanted.length === 3 ? "all three policies" : "both policies"
-        }.`}
+        lead="Step 4 of 4 · check the details below, then accept both policies."
         size="form"
       />
 
@@ -221,14 +222,10 @@ export function ReviewStep({
             processing of the student&apos;s personal data.
           </ConsentRow>
           {minor && safety && (
-            <ConsentRow
-              id="accept-safety"
-              checked={accepted[safety.id] === true}
-              onChange={toggle(safety.id)}
-            >
-              A parent or guardian has approved this registration, and I have
-              read the <PolicyLink policy={safety} />.
-            </ConsentRow>
+            <p className="text-sm leading-5 text-muted-foreground">
+              The <PolicyLink policy={safety} /> also applies to this
+              registration.
+            </p>
           )}
         </div>
       )}
