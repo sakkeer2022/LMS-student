@@ -10,7 +10,7 @@ const backend = () => `${process.env.BACKEND_ORIGIN ?? 'http://127.0.0.1:3000'}/
 export async function requireStudent() {
   const path = (await headers()).get('x-pathname') ?? STUDENT_HOME;
   const toLogin = `/login?redirect=${encodeURIComponent(path)}`;
-  const token = (await cookies()).get('accessToken')?.value;
+  const token = (await cookies()).get('student_accessToken')?.value;
   if (!token) redirect(toLogin);
 
   const me = await fetch(`${backend()}/auth/me`, {
